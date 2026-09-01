@@ -63,10 +63,10 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.4), ease: [0.22, 1, 0.36, 1] }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-md border border-ink-200 bg-white transition-shadow hover:border-brand-300 hover:shadow-[var(--shadow-lift)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-ink-200 bg-white transition-shadow hover:border-brand-300 hover:shadow-[var(--shadow-lift)]"
     >
       <Link href={`/productos/${product.slug}`} className="flex h-full flex-col" prefetch={false}>
-        <div className="relative aspect-square overflow-hidden bg-white p-2">
+        <div className="relative aspect-square overflow-hidden bg-[#f7f7f7] p-2">
           <ProductImage
             src={img?.src}
             alt={img?.alt || product.name}
@@ -142,7 +142,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
               onClick={addToCart}
               disabled={!canAddToCart}
               className={`inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-md px-3 text-xs font-bold text-ink-900 shadow-sm transition-all duration-200 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 ${
-                added ? "bg-emerald-400" : "bg-[#ffd814] hover:bg-[#f7ca00]"
+                added ? "bg-emerald-500 text-white" : "bg-accent-500 text-white hover:bg-accent-600"
               }`}
             >
               {added ? (

@@ -29,8 +29,8 @@ export function CategoryCarousel({
   const items = categories.slice(0, 8);
 
   return (
-    <section className="border-y border-[#d5d9d9] bg-[#eaeded] py-8 md:py-10">
-      <div className="mx-auto mb-5 flex max-w-[1500px] items-end justify-between gap-4 px-4">
+    <section className="border-y border-[#d5d9d9] bg-[#f2f3f3] py-8 md:py-10">
+      <div className="mx-auto mb-5 max-w-[1500px] px-4">
         <motion.span
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export function CategoryCarousel({
         >
           {title}
         </motion.h2>
-        <p className="mt-1 text-xs text-ink-500 md:text-sm">{subtitle}</p>
+        <p className="mt-1 max-w-2xl text-xs text-ink-500 md:text-sm">{subtitle}</p>
       </div>
 
       <div className="mx-auto grid max-w-[1500px] grid-cols-2 gap-3 px-4 sm:grid-cols-4 lg:grid-cols-8">

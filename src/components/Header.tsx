@@ -31,14 +31,14 @@ export function Header({
   const pathname = usePathname() ?? "/";
 
   return (
-    <header className="relative z-40 border-b border-brand-800 bg-brand-900 text-white">
+    <header className="relative z-40 border-b border-brand-800 bg-brand-900 text-white shadow-sm">
       {seasonal === "patriotic-month" && <PatrioticMonthBar />}
 
       <div className="relative">
       {seasonal === "patriotic-month" && <PatrioticMonthDecor />}
-      <div className="border-b border-white/10 bg-[#131a24]">
+      <div className="border-b border-white/10 bg-brand-900">
       <div className="relative mx-auto flex max-w-[1500px] items-center gap-2 px-3 py-2 sm:gap-4 sm:px-4 md:py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2 rounded-sm px-1 py-1 ring-offset-[#131a24] hover:ring-1 hover:ring-white/50">
+        <Link href="/" className="flex shrink-0 items-center gap-2 rounded-sm px-1 py-1 ring-offset-brand-900 hover:ring-1 hover:ring-white/50">
           <Image
             src="/tustore-logo.png"
             alt="TUStore Costa Rica"
@@ -70,7 +70,7 @@ export function Header({
             />
             <button
               type="submit"
-              className="inline-flex w-12 shrink-0 items-center justify-center bg-[#febd69] text-ink-900 transition-colors hover:bg-[#f3a847]"
+              className="inline-flex w-12 shrink-0 items-center justify-center bg-accent-500 text-white transition-colors hover:bg-accent-600"
             >
               <Search className="size-5" aria-hidden />
             </button>
@@ -116,7 +116,7 @@ export function Header({
           <button
             type="submit"
             aria-label="Buscar"
-            className="absolute right-1.5 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md bg-[#febd69] text-ink-900 transition-colors hover:bg-[#f3a847]"
+            className="absolute right-1.5 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md bg-accent-500 text-white transition-colors hover:bg-accent-600"
           >
             <Search className="size-4" aria-hidden />
           </button>
@@ -125,7 +125,7 @@ export function Header({
       </div>
       </div>
 
-      <div className="hidden border-t border-white/10 bg-brand-900 md:block">
+      <div className="hidden border-t border-white/10 bg-brand-800 md:block">
         <NavHeader items={menu} />
       </div>
 

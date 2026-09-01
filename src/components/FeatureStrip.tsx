@@ -25,14 +25,14 @@ const FEATURES = [
 
 export function FeatureStrip() {
   return (
-    <section className="border-y border-ink-200 bg-ink-50">
+    <section className="border-y border-ink-200 bg-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-ink-200 md:grid-cols-4">
         {FEATURES.map(({ Icon, title, desc }) => (
           <div
             key={title}
-            className="flex items-start gap-3 bg-ink-50 p-5 transition-colors hover:bg-white"
+            className="flex items-start gap-3 border-t-2 border-transparent bg-white p-5 transition-colors hover:border-accent-400 hover:bg-brand-50/40"
           >
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-accent-500">
               <Icon className="size-5" />
             </div>
             <div>

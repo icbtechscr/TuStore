@@ -196,7 +196,7 @@ export default async function HomePage() {
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
               href={content.cta.primaryCtaHref}
-              className="rounded-full bg-accent-500 px-6 py-3 text-sm font-bold text-ink-900 shadow-lg shadow-accent-500/30 transition hover:bg-accent-400"
+              className="rounded-full bg-accent-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-600"
             >
               {content.cta.primaryCtaLabel}
             </Link>

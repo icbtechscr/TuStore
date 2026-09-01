@@ -30,7 +30,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="relative overflow-hidden rounded-xl border border-ink-200 bg-white">
+      <div className="relative overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm">
         {/* Pista deslizable */}
         <div
           className="flex transition-transform duration-500 ease-out"
