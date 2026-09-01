@@ -15,8 +15,11 @@ FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS=--max-old-space-size=2048
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# Keep the image buildable before TuStore's independent Supabase is provisioned.
+# Coolify may pass unset build arguments as empty strings, which would otherwise
+# override the safe client-side fallbacks in src/lib/supabase.ts.
+ARG NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=placeholder-public-key
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_SITE_ORIGIN
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
