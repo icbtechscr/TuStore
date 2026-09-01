@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/marcaje-reminder", "schedule": "35 14 * * *" }
+  ]
+}

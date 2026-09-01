@@ -1,0 +1,11 @@
+[Unit]
+Description=ICB CPI sync to self-hosted database
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/opt/icb-ops/host-job.sh cpi
+TimeoutStartSec=100min
+Nice=10

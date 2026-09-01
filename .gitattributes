@@ -1,0 +1,4 @@
+scripts/self-host/*.sh text eol=lf
+scripts/self-host/*.py text eol=lf
+scripts/self-host/*.service text eol=lf
+scripts/self-host/*.timer text eol=lf

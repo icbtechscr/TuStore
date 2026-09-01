@@ -1,0 +1,11 @@
+[Unit]
+Description=ICB nightly CPI reconciliation (last 31 days)
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/opt/icb-ops/host-job.sh cpi-full
+TimeoutStartSec=100min
+Nice=15

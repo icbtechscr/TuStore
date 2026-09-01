@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eef3fb;
+  --color-brand-100: #dbe6f7;
+  --color-brand-200: #b9ccec;
+  --color-brand-300: #8daada;
+  --color-brand-400: #6085c4;
+  --color-brand-500: #3e64aa;
+  --color-brand-600: #2d4f96;
+  --color-brand-700: #28437d;
+  --color-brand-800: #233968;
+  --color-brand-900: #1b2e54;
+
+  --color-accent-50: #fff3ed;
+  --color-accent-100: #ffe2d4;
+  --color-accent-200: #ffc2a8;
+  --color-accent-300: #ff9870;
+  --color-accent-400: #f96b3b;
+  --color-accent-500: #ef4722;
+  --color-accent-600: #df3516;
+  --color-accent-700: #b92712;
+  --color-accent-800: #942315;
+
+  --color-danger: #cc1818;
+  --color-danger-light: #fee2e2;
+  --color-warn: #fbc531;
+  --color-info: #0097e6;
+
+  --color-ink-50: #fafafa;
+  --color-ink-100: #f4f4f5;
+  --color-ink-200: #e4e4e7;
+  --color-ink-300: #d4d4d8;
+  --color-ink-400: #a1a1aa;
+  --color-ink-500: #71717a;
+  --color-ink-600: #52525b;
+  --color-ink-700: #3f3f46;
+  --color-ink-800: #27272a;
+  --color-ink-900: #18181b;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow-lift: 0 10px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-glow: 0 0 0 4px rgb(45 79 150 / 0.14);
+
+  --radius-card: 1rem;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #18181b;
+  --surface: #ffffff;
+}
+
+/* Admin night mode — dark gray, not full black.
+   Remaps the ink scale + white so every admin utility flips automatically. */
+.admin-dark {
+  --color-white: #26282d;
+  --color-ink-50: #1c1d21;
+  --color-ink-100: #303237;
+  --color-ink-200: #3b3d43;
+  --color-ink-300: #52555c;
+  --color-ink-400: #8b8d94;
+  --color-ink-500: #a9abb2;
+  --color-ink-600: #c4c6cc;
+  --color-ink-700: #d8dade;
+  --color-ink-800: #e8e9ec;
+  --color-ink-900: #f4f4f5;
+  --color-brand-50: #2a2d3f;
+  --color-accent-50: #233028;
+  color-scheme: dark;
+}
+
+/* Modo noche de la TIENDA.
+   A diferencia de .admin-dark, NO remapeamos --color-white, para que `text-white`
+   siga siendo blanco sobre el "chrome" oscuro (footer, banda CTA, navbar azul).
+   En su lugar invertimos la escala ink (texto/bordes) y volteamos solo los
+   FONDOS `bg-white` a una superficie oscura mediante una regla específica. */
+.dark {
+  --surface: #26282d;
+  --color-ink-50: #1c1d21;
+  --color-ink-100: #303237;
+  --color-ink-200: #3b3d43;
+  --color-ink-300: #52555c;
+  --color-ink-400: #8b8d94;
+  --color-ink-500: #a9abb2;
+  --color-ink-600: #c4c6cc;
+  --color-ink-700: #d8dade;
+  --color-ink-800: #e8e9ec;
+  --color-ink-900: #f4f4f5;
+  --color-brand-50: #2a2d3f;
+  --color-accent-50: #233028;
+  --background: #15161a;
+  --foreground: #f4f4f5;
+  color-scheme: dark;
+}
+/* Superficies blancas → superficie oscura (sin afectar text-white). */
+.dark .bg-white {
+  background-color: var(--surface);
+}
+
+/* En modo noche, los textos en azul (brand) y verde (accent) se aclaran a
+   tonos pastel para que se lean sobre el fondo oscuro. Solo afecta el COLOR
+   de texto, no los fondos de botones. */
+.dark .text-brand-900,
+.dark .text-brand-800,
+.dark .text-brand-700,
+.dark .text-brand-600,
+.dark .text-brand-500 {
+  color: #aebbf2;
+}
+.dark .text-accent-800,
+.dark .text-accent-700,
+.dark .text-accent-600,
+.dark .text-accent-500 {
+  color: #ffad8b;
+}
+.dark .hover\:text-brand-600:hover,
+.dark .hover\:text-brand-700:hover {
+  color: #c7d0f7;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 35s linear infinite; }
+.animate-marquee:hover { animation-play-state: paused; }
+.animate-marquee-slow { animation: marquee 55s linear infinite; }
+.animate-marquee-slow:hover { animation-play-state: paused; }
+
+/* Shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(110deg, #f4f4f5 8%, #e4e4e7 18%, #f4f4f5 33%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* Gradient orb (hero) */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Pretty scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-ink-50); }
+::-webkit-scrollbar-thumb { background: var(--color-ink-300); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-brand-500); }
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Card lift */
+.card-lift {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 220ms ease-out;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Mask gradient (for hero blob etc) */
+.mask-fade-right {
+  -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}

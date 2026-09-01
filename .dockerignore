@@ -1,0 +1,15 @@
+.git
+.github
+.next
+node_modules
+backups
+output
+outputs
+tmp
+.agent-auth
+.vercel
+.env*
+*.log
+README.md
+CLAUDE.md
+AGENTS.md

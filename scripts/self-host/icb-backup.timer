@@ -1,0 +1,10 @@
+[Unit]
+Description=ICB daily backup at 02:40 Costa Rica
+
+[Timer]
+OnCalendar=*-*-* 02:40:00 America/Costa_Rica
+Persistent=true
+Unit=icb-backup.service
+
+[Install]
+WantedBy=timers.target

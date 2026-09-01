@@ -1,0 +1,11 @@
+[Unit]
+Description=ICB clock-in reminders at 08:35 Costa Rica
+
+[Timer]
+OnCalendar=*-*-* 08:35:00 America/Costa_Rica
+# No enviar recordatorios atrasados al encender el servidor.
+Persistent=false
+Unit=icb-reminder.service
+
+[Install]
+WantedBy=timers.target

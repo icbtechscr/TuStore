@@ -1,0 +1,11 @@
+[Unit]
+Description=ICB database, storage and configuration backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/icb-ops/backup.py
+TimeoutStartSec=30min
+Nice=15

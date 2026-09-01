@@ -1,0 +1,10 @@
+[Unit]
+Description=ICB nightly reconciliation at 01:10 Costa Rica
+
+[Timer]
+OnCalendar=*-*-* 01:10:00 America/Costa_Rica
+Persistent=true
+Unit=icb-cpi-full.service
+
+[Install]
+WantedBy=timers.target

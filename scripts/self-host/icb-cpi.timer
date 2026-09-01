@@ -1,0 +1,11 @@
+[Unit]
+Description=ICB CPI every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+RandomizedDelaySec=30
+Persistent=true
+Unit=icb-cpi.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=ICB clock-in reminders (enable only after cutover)
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/opt/icb-ops/host-job.sh reminder
+TimeoutStartSec=3min
