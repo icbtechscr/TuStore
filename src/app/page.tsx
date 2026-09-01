@@ -144,8 +144,8 @@ export default async function HomePage() {
       />
 
       {onSale.length > 0 && (
-        <section className="bg-gradient-to-b from-[var(--surface)] to-ink-50 py-14">
-          <div className="mx-auto max-w-7xl px-4">
+        <section className="border-t border-[#d5d9d9] bg-[#eaeded] py-8 md:py-10">
+          <div className="mx-auto max-w-[1500px] px-4">
             <SectionHeader
               eyebrow={content.ofertas.eyebrow}
               title={content.ofertas.title}
@@ -154,7 +154,7 @@ export default async function HomePage() {
               hrefLabel="Ver todas"
               accent="danger"
             />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {onSale.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
@@ -163,7 +163,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="mx-auto max-w-7xl px-4 py-14">
+      <section className="border-t border-[#d5d9d9] bg-[#eaeded] px-4 py-8 md:py-10">
+        <div className="mx-auto max-w-[1500px]">
         <SectionHeader
           eyebrow={content.destacados.eyebrow}
           title={content.destacados.title}
@@ -171,10 +172,11 @@ export default async function HomePage() {
           href="/productos"
           accent="accent"
         />
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {destacados.map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} />
           ))}
+        </div>
         </div>
       </section>
 

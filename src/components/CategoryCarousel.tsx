@@ -23,16 +23,19 @@ export function CategoryCarousel({
   subtitle: string;
 }) {
   if (categories.length === 0) return null;
-  const items = [...categories, ...categories];
+  // La portada usa un escaparate de departamentos al estilo marketplace:
+  // tarjetas claras, densas y fáciles de explorar (en vez de un carrusel
+  // circular que escondía categorías importantes en pantallas grandes).
+  const items = categories.slice(0, 8);
 
   return (
-    <section className="bg-white py-14 md:py-20">
-      <div className="mx-auto mb-10 max-w-7xl px-4 text-center">
+    <section className="border-y border-[#d5d9d9] bg-[#eaeded] py-8 md:py-10">
+      <div className="mx-auto mb-5 flex max-w-[1500px] items-end justify-between gap-4 px-4">
         <motion.span
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-xs font-bold uppercase tracking-[0.3em] text-brand-600"
+          className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700"
         >
           {eyebrow}
         </motion.span>
@@ -41,42 +44,44 @@ export function CategoryCarousel({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="mt-2 text-3xl font-black tracking-tight text-ink-900 md:text-5xl"
+          className="mt-1 text-2xl font-black tracking-tight text-ink-900 md:text-3xl"
         >
           {title}
         </motion.h2>
-        <p className="mt-2 text-sm text-ink-500">{subtitle}</p>
+        <p className="mt-1 text-xs text-ink-500 md:text-sm">{subtitle}</p>
       </div>
 
-      <div className="group relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[var(--surface)] to-transparent sm:w-32" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--surface)] to-transparent sm:w-32" />
-
-        <div className="flex w-max gap-6 animate-marquee-slow group-hover:[animation-play-state:paused] sm:gap-10">
-          {items.map((c, i) => (
+      <div className="mx-auto grid max-w-[1500px] grid-cols-2 gap-3 px-4 sm:grid-cols-4 lg:grid-cols-8">
+        {items.map((c, i) => (
+          <motion.div
+            key={`${c.slug}-${i}`}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-30px" }}
+            transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.2) }}
+          >
             <Link
-              key={`${c.slug}-${i}`}
               href={`/categoria/${c.slug}`}
-              className="group/item flex w-32 shrink-0 flex-col items-center sm:w-40"
+              className="group/item block h-full rounded-sm border border-[#d5d9d9] bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="relative flex aspect-square w-28 items-center justify-center overflow-hidden rounded-full bg-[#ffffff] ring-1 ring-ink-200 transition-all duration-300 group-hover/item:-translate-y-1 group-hover/item:ring-brand-400 group-hover/item:shadow-lift sm:w-36">
+              <div className="relative aspect-square overflow-hidden bg-[#f7f7f7]">
                 <ProductImage
                   src={c.imageUrl}
                   alt={c.name}
-                  sizes="(max-width: 640px) 112px, 144px"
-                  className="p-4 transition-transform duration-500 group-hover/item:scale-110"
+                  sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 150px"
+                  className="p-3 transition-transform duration-500 group-hover/item:scale-105"
                   placeholderLabel={c.name}
                 />
-                <span className="absolute -top-1 right-1 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-soft">
-                  {c.count}
-                </span>
               </div>
-              <span className="mt-3 text-center text-xs font-bold uppercase tracking-wide text-ink-700 transition-colors group-hover/item:text-brand-600 sm:text-sm">
+              <div className="mt-2 line-clamp-2 min-h-10 text-sm font-bold leading-tight text-ink-900">
                 {c.name}
-              </span>
+              </div>
+              <div className="mt-1 text-xs text-brand-600 group-hover/item:text-accent-700">
+                Ver productos <span aria-hidden>›</span>
+              </div>
             </Link>
-          ))}
-        </div>
+          </motion.div>
+        ))}
       </div>
     </section>
   );
