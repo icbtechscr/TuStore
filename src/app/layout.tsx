@@ -7,8 +7,6 @@ import { SiteChromeGate } from "@/components/SiteChromeGate";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CartProvider } from "@/lib/cart";
 import { getNavMenu } from "@/lib/category-tree";
-import { isPatrioticMonthSeason } from "@/lib/seasonal";
-import { PatrioticMonthPageDecor } from "@/components/seasonal/PatrioticMonthDecor";
 import {
   SITE_URL,
   SITE_NAME,
@@ -93,9 +91,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const menu = await getNavMenu();
-  // La temporada se decide en el servidor: asi el HTML ya llega decorado y no
-  // hay parpadeo ni diferencia con la hidratacion.
-  const seasonal = isPatrioticMonthSeason() ? ("patriotic-month" as const) : null;
   return (
     <html lang="es" className="h-full antialiased" suppressHydrationWarning>
       <head>
@@ -109,13 +104,8 @@ export default async function RootLayout({
       </head>
       <body className="relative min-h-full flex flex-col text-ink-900">
         <CartProvider>
-          {seasonal === "patriotic-month" && (
-            <SiteChromeGate>
-              <PatrioticMonthPageDecor />
-            </SiteChromeGate>
-          )}
           <SiteChromeGate>
-            <Header menu={menu} seasonal={seasonal} />
+            <Header menu={menu} />
           </SiteChromeGate>
           <main className="flex-1">{children}</main>
           <SiteChromeGate>
