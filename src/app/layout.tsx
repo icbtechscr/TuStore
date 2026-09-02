@@ -85,6 +85,11 @@ export const viewport: Viewport = {
   themeColor: "#1b2e54",
 };
 
+// La navbar y el footer se pueden editar desde /admin/ajustes. Este layout
+// debe renderizarse en cada solicitud para no congelar esa configuración en
+// el HTML generado durante el build del contenedor.
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
