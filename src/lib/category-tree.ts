@@ -1,4 +1,5 @@
 import { getCategoryTree as loadCategoryTree } from "./products";
+import { getSiteContent } from "./site-content";
 
 export type SubCategory = { name: string; slug: string; count: number };
 export type NavSubNode = SubCategory & { children: NavSubNode[] };
@@ -26,17 +27,27 @@ export async function getNavMenu(): Promise<NavItem[]> {
   try {
     const tree = await loadCategoryTree();
     const bySlug = new Map(tree.map((category) => [category.slug, category]));
-    return NAV_ITEMS.map((item) => {
-      const category = item.slug ? bySlug.get(item.slug) : undefined;
+    const configured = (await getSiteContent()).navbar.items;
+    return configured.map((item) => {
+      const primarySlug = item.categorySlug;
+      const primary = primarySlug ? bySlug.get(primarySlug) : undefined;
+      const extraCategories = item.categorySlugs
+        .map((slug) => bySlug.get(slug))
+        .filter((category): category is NonNullable<typeof category> => !!category);
+      const categories = [primary, ...extraCategories].filter(
+        (category): category is NonNullable<typeof category> => !!category
+      );
+      const children = categories
+        .flatMap((category) => category.children)
+        .filter(
+          (child, index, all) => all.findIndex((candidate) => candidate.slug === child.slug) === index
+        )
+        .map((child) => ({ ...child, children: [] }));
+
       return {
-        label: item.label,
-        href: item.href,
-        children: (category?.children ?? []).map((child) => ({
-          name: child.name,
-          slug: child.slug,
-          count: child.count,
-          children: [],
-        })),
+        label: item.label || "Sin nombre",
+        href: item.href || (primarySlug ? `/categoria/${primarySlug}` : "/"),
+        children,
       };
     });
   } catch {

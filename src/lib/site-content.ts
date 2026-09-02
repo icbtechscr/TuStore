@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+
 export type HeroContent = {
   badge: string;
   titleLine1: string;
@@ -224,5 +226,45 @@ function mergeSection<K extends SectionKey>(
 }
 
 export async function getSiteContent(): Promise<SiteContent> {
-  return DEFAULT_CONTENT;
+  // El contenido se guarda por secciones en Supabase para que los cambios
+  // hechos desde /admin/ajustes se reflejen en la tienda pública. Si la tabla
+  // todavía no existe o la consulta falla, conservamos los valores por defecto
+  // para no dejar la página inutilizable.
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("key, value");
+
+  if (error) {
+    console.warn(`[tustore-site] Usando contenido por defecto: ${error.message}`);
+    return DEFAULT_CONTENT;
+  }
+
+  const stored = new Map<string, unknown>(
+    (data ?? []).map((row) => [row.key, row.value])
+  );
+  const section = (key: SectionKey) =>
+    (stored.get(key) ?? undefined) as Record<string, unknown> | undefined;
+  const hero = mergeSection("hero", section("hero"));
+
+  return {
+    hero: {
+      ...hero,
+      featuredProductIds:
+        hero.featuredProductIds?.length
+          ? hero.featuredProductIds
+          : hero.featuredProductId
+            ? [hero.featuredProductId]
+            : [],
+    },
+    categories: mergeSection("categories", section("categories")),
+    ofertas: mergeSection("ofertas", section("ofertas")),
+    destacados: mergeSection("destacados", section("destacados")),
+    cta: mergeSection("cta", section("cta")),
+    footer: mergeSection("footer", section("footer")),
+    navbar: {
+      items: normalizeNavbarItems(
+        (section("navbar") as { items?: unknown } | undefined)?.items
+      ),
+    },
+  };
 }
