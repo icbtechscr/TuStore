@@ -156,7 +156,7 @@ export async function POST(req: Request) {
         shipping_method: shippingMethod,
         shipping_notes: shippingNotes,
         payment_method: paymentMethod,
-        payment_status: paymentMethod === "tarjeta" ? "rechazado" : "pendiente",
+        payment_status: "pendiente",
         subtotal_crc: subtotal,
         shipping_crc: shippingCost,
         total_crc: total,

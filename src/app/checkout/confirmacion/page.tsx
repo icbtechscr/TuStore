@@ -60,11 +60,13 @@ export default function ConfirmacionPage() {
   const { clear } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [copied, setCopied] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem("tustore-last-order");
       if (raw) setOrder(JSON.parse(raw));
+      setPaymentStatus(new URLSearchParams(window.location.search).get("status"));
     } catch {}
     clear();
   }, [clear]);
@@ -88,6 +90,8 @@ export default function ConfirmacionPage() {
       </div>
     );
   }
+
+  const paymentFailed = paymentStatus === "rejected" || paymentStatus === "error";
 
   const eta = new Date(order.createdAt);
   if (order.shipping.method === "recogida") eta.setDate(eta.getDate() + 1);
@@ -124,7 +128,7 @@ export default function ConfirmacionPage() {
             className="relative"
           >
             <div className="absolute inset-0 -m-4 animate-ping rounded-full bg-emerald-400/30" />
-            <div className="relative flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-xl shadow-emerald-500/40 ring-4 ring-emerald-100">
+            <div className={`relative flex size-20 items-center justify-center rounded-full bg-gradient-to-br shadow-xl ring-4 ${paymentFailed ? "from-red-400 to-red-600 shadow-red-500/40 ring-red-100" : "from-emerald-400 to-emerald-600 shadow-emerald-500/40 ring-emerald-100"}`}>
               <CheckCircle2 className="size-10 text-white" strokeWidth={2.5} />
             </div>
           </motion.div>
@@ -134,7 +138,7 @@ export default function ConfirmacionPage() {
             transition={{ delay: 0.4 }}
             className="mt-6 text-4xl font-black tracking-tight text-ink-900 md:text-5xl"
           >
-            ¡Gracias por tu compra!
+            {paymentFailed ? "Pago no completado" : "¡Gracias por tu compra!"}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -142,10 +146,14 @@ export default function ConfirmacionPage() {
             transition={{ delay: 0.5 }}
             className="mt-3 max-w-xl text-base text-ink-500"
           >
-            Recibimos tu pedido y te enviamos un correo de confirmación a{" "}
+            {paymentFailed
+              ? "No se pudo aprobar el pago. Podés intentar nuevamente o contactarnos por WhatsApp."
+              : "Recibimos tu pedido y te enviamos un correo de confirmación a "}
+            {!paymentFailed && (
             <span className="font-semibold text-accent-700">
               {order.shipping.email}
             </span>
+            )}
           </motion.p>
 
           <motion.button

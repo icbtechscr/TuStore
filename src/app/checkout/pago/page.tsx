@@ -8,6 +8,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Smartphone,
+  CreditCard,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatCRC } from "@/lib/utils";
@@ -49,6 +50,8 @@ export default function PagoPage() {
   const { items, subtotal, count } = useCart();
   const [shipping, setShipping] = useState<Shipping | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -133,6 +136,91 @@ export default function PagoPage() {
     .filter(Boolean)
     .join("\n");
   const whatsappUrl = `https://wa.me/50640025649?text=${encodeURIComponent(message)}`;
+  const checkoutShipping = shipping;
+
+  async function startTilopayPayment() {
+    if (paying) return;
+    setPaying(true);
+    setPaymentError(null);
+    try {
+      const orderRes = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((item) => ({ id: item.id, qty: item.qty })),
+          customer: {
+            name: customerName,
+            email: checkoutShipping.email,
+            phone: checkoutShipping.phone,
+            idNumber: checkoutShipping.idNumber,
+          },
+          shipping: {
+            province: checkoutShipping.province,
+            canton: checkoutShipping.canton,
+            address: checkoutShipping.address,
+            method: checkoutShipping.method,
+            notes: checkoutShipping.reference,
+            zoneId: checkoutShipping.zoneId,
+            size: checkoutShipping.size,
+            lat: checkoutShipping.lat,
+            lng: checkoutShipping.lng,
+          },
+          paymentMethod: "tarjeta",
+        }),
+      });
+      if (!orderRes.ok) throw new Error(await orderRes.text());
+      const created = (await orderRes.json()) as {
+        orderId: string;
+        orderNumber: string;
+        subtotal: number;
+        shippingCost: number;
+        total: number;
+      };
+
+      try {
+        localStorage.setItem(
+          "tustore-last-order",
+          JSON.stringify({
+            orderId: created.orderNumber,
+            createdAt: new Date().toISOString(),
+            items: items.map((item) => ({
+              id: item.id,
+              name: item.name,
+              image: item.image,
+              qty: item.qty,
+              unitPrice: item.unitPrice,
+            })),
+            subtotal: created.subtotal,
+            shippingCost: created.shippingCost,
+            total: created.total,
+            shipping: {
+              fullName: customerName,
+              email: checkoutShipping.email,
+              phone: checkoutShipping.phone,
+              province: checkoutShipping.province,
+              canton: checkoutShipping.canton,
+              address: checkoutShipping.address,
+              method: checkoutShipping.method,
+            },
+            paymentMethod: "tarjeta",
+          })
+        );
+      } catch {}
+
+      const paymentRes = await fetch("/api/payments/tilopay/create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orderId: created.orderId }),
+      });
+      if (!paymentRes.ok) throw new Error(await paymentRes.text());
+      const payment = (await paymentRes.json()) as { url?: string };
+      if (!payment.url) throw new Error("Tilopay no devolvió la URL de pago");
+      window.location.assign(payment.url);
+    } catch (error) {
+      setPaying(false);
+      setPaymentError(error instanceof Error ? error.message : "No se pudo iniciar el pago");
+    }
+  }
 
   return (
     <div className="bg-white">
@@ -165,28 +253,41 @@ export default function PagoPage() {
               <MessageCircle className="size-6" />
             </div>
             <h2 className="mt-5 text-2xl font-black text-ink-900">
-              Atención personal y pago seguro
+              Pago seguro con Tilopay
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-600">
-              Al continuar se abrirá WhatsApp con el resumen preparado. Un asesor te
-              indicará cómo pagar por SINPE Móvil, transferencia, efectivo o link de
-              pago para tarjeta.
+              Podés pagar con tarjeta en la plataforma segura de Tilopay. También podés
+              continuar por WhatsApp si preferís coordinar SINPE Móvil, transferencia o efectivo.
             </p>
             <ul className="mt-6 grid gap-3 text-sm text-ink-600 sm:grid-cols-2">
               <li className="flex items-center gap-2 rounded-xl bg-ink-50 p-3">
                 <ShieldCheck className="size-4 text-brand-600" />
-                Datos de pago confirmados por un asesor
+                Los datos de tarjeta no pasan por TuStore
               </li>
               <li className="flex items-center gap-2 rounded-xl bg-ink-50 p-3">
                 <Smartphone className="size-4 text-brand-600" />
                 Atención al +506 4002 5649
               </li>
             </ul>
+            {paymentError && (
+              <p className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {paymentError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={startTilopayPayment}
+              disabled={paying}
+              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-accent-600/20 transition hover:bg-accent-700 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+            >
+              <CreditCard className="size-5" />
+              {paying ? "Conectando con Tilopay…" : "Pagar con tarjeta"}
+            </button>
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-accent-600/20 transition hover:bg-accent-700 sm:w-auto"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-ink-200 bg-white px-6 py-4 text-sm font-bold text-ink-800 transition hover:bg-ink-50 sm:w-auto"
             >
               <MessageCircle className="size-5" />
               Continuar por WhatsApp
