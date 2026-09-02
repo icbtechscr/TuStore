@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { createAdminClient } from "./supabase";
 
 export type HeroContent = {
   badge: string;
@@ -230,41 +230,47 @@ export async function getSiteContent(): Promise<SiteContent> {
   // hechos desde /admin/ajustes se reflejen en la tienda pública. Si la tabla
   // todavía no existe o la consulta falla, conservamos los valores por defecto
   // para no dejar la página inutilizable.
-  const { data, error } = await supabase
-    .from("site_settings")
-    .select("key, value");
+  try {
+    // La configuración la editan administradores. Leerla con la clave de
+    // servidor evita depender de que la política pública de RLS haya sido
+    // aplicada en cada entorno de Supabase.
+    const { data, error } = await createAdminClient()
+      .from("site_settings")
+      .select("key, value");
 
-  if (error) {
-    console.warn(`[tustore-site] Usando contenido por defecto: ${error.message}`);
+    if (error) throw error;
+
+    const stored = new Map<string, unknown>(
+      (data ?? []).map((row) => [row.key, row.value])
+    );
+    const section = (key: SectionKey) =>
+      (stored.get(key) ?? undefined) as Record<string, unknown> | undefined;
+    const hero = mergeSection("hero", section("hero"));
+
+    return {
+      hero: {
+        ...hero,
+        featuredProductIds:
+          hero.featuredProductIds?.length
+            ? hero.featuredProductIds
+            : hero.featuredProductId
+              ? [hero.featuredProductId]
+              : [],
+      },
+      categories: mergeSection("categories", section("categories")),
+      ofertas: mergeSection("ofertas", section("ofertas")),
+      destacados: mergeSection("destacados", section("destacados")),
+      cta: mergeSection("cta", section("cta")),
+      footer: mergeSection("footer", section("footer")),
+      navbar: {
+        items: normalizeNavbarItems(
+          (section("navbar") as { items?: unknown } | undefined)?.items
+        ),
+      },
+    };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(`[tustore-site] Usando contenido por defecto: ${reason}`);
     return DEFAULT_CONTENT;
   }
-
-  const stored = new Map<string, unknown>(
-    (data ?? []).map((row) => [row.key, row.value])
-  );
-  const section = (key: SectionKey) =>
-    (stored.get(key) ?? undefined) as Record<string, unknown> | undefined;
-  const hero = mergeSection("hero", section("hero"));
-
-  return {
-    hero: {
-      ...hero,
-      featuredProductIds:
-        hero.featuredProductIds?.length
-          ? hero.featuredProductIds
-          : hero.featuredProductId
-            ? [hero.featuredProductId]
-            : [],
-    },
-    categories: mergeSection("categories", section("categories")),
-    ofertas: mergeSection("ofertas", section("ofertas")),
-    destacados: mergeSection("destacados", section("destacados")),
-    cta: mergeSection("cta", section("cta")),
-    footer: mergeSection("footer", section("footer")),
-    navbar: {
-      items: normalizeNavbarItems(
-        (section("navbar") as { items?: unknown } | undefined)?.items
-      ),
-    },
-  };
 }
