@@ -270,6 +270,36 @@ export default async function AdminProductsPage({
             Siguiente →
           </Link>
         )}
+        <form
+          action="/admin/productos"
+          method="get"
+          className="ml-2 inline-flex items-center gap-1.5"
+          aria-label="Ir a una página"
+        >
+          {q && <input type="hidden" name="q" value={q} />}
+          {onSale && <input type="hidden" name="on_sale" value="1" />}
+          {outOfStock && <input type="hidden" name="out" value="1" />}
+          {stockStatus && <input type="hidden" name="stock" value={stockStatus} />}
+          <label htmlFor="admin-page" className="sr-only">
+            Número de página
+          </label>
+          <input
+            id="admin-page"
+            name="page"
+            type="number"
+            min={1}
+            max={totalPages}
+            defaultValue={page}
+            inputMode="numeric"
+            className="h-8 w-16 rounded-full border border-ink-200 bg-white px-2 text-center text-xs font-semibold text-ink-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          />
+          <button
+            type="submit"
+            className="h-8 rounded-full border border-ink-200 bg-white px-3 text-xs font-semibold text-ink-700 hover:bg-ink-50"
+          >
+            Ir
+          </button>
+        </form>
       </div>
     </div>
   );

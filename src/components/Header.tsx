@@ -45,7 +45,7 @@ export function Header({
             width={205}
             height={50}
             style={{ width: "auto" }}
-            className="h-9 w-auto object-contain transition sm:h-11"
+            className="h-9 w-auto object-contain brightness-0 invert transition sm:h-11"
             priority
           />
         </Link>
