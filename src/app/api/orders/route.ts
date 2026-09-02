@@ -33,6 +33,15 @@ type Body = {
   paymentMethod?: string;
 };
 
+// El snapshot importado de WooCommerce usa IDs numéricos, mientras que la
+// relación opcional con products en Supabase usa UUID. Conservamos el detalle
+// del pedido aunque el producto todavía no exista en el catálogo normalizado.
+function uuidOrNull(value: string | null | undefined): string | null {
+  return value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
@@ -108,7 +117,7 @@ export async function POST(req: Request) {
         const unit = p.salePriceCRC ?? p.priceCRC;
         const qty = Math.min(99, Math.max(1, Math.floor(i.qty)));
         return {
-          product_id: p.id,
+          product_id: uuidOrNull(p.id),
           product_name: p.name,
           product_slug: p.slug,
           unit_price_crc: unit,
