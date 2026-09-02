@@ -1,6 +1,8 @@
 import "server-only";
 import { decodeHtml } from "./utils";
 import type { StockStatus } from "./stock";
+import { supabase } from "./supabase";
+import { rewriteMediaUrl } from "./image-url";
 import catalogSnapshot from "../../data/tustore-woo-snapshot.json";
 
 // La API de WooCommerce solo se usa durante una transición explícita. Sin la
@@ -211,6 +213,78 @@ function productFromWoo(product: WooProduct): Product {
     })),
     brand: inferBrand(product),
   };
+}
+
+type DatabaseProduct = {
+  id: string;
+  woo_id: number | null;
+  sku: string | null;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  price_crc: number;
+  sale_price_crc: number | null;
+  on_sale: boolean;
+  in_stock: boolean;
+  stock_qty: number | null;
+  brand?: { name: string } | null;
+  product_images?: { url: string; alt: string | null; position: number }[];
+  product_categories?: {
+    category: { id: string; name: string; slug: string } | null;
+  }[];
+};
+
+function productFromDatabase(row: DatabaseProduct): Product {
+  const images = [...(row.product_images ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((image, position) => ({
+      src: rewriteMediaUrl(image.url),
+      alt: image.alt || row.name,
+      position,
+    }));
+  const categories = (row.product_categories ?? [])
+    .map((item) => item.category)
+    .filter((category): category is NonNullable<typeof category> => !!category)
+    .map((category) => ({
+      id: category.id,
+      name: decodeHtml(category.name),
+      slug: category.slug,
+    }));
+  const stockStatus: StockStatus = row.in_stock ? "in_stock" : "out_of_stock";
+  return {
+    id: row.id,
+    wooId: row.woo_id,
+    name: decodeHtml(row.name),
+    slug: row.slug,
+    sku: row.sku?.trim() || null,
+    shortDescription: row.short_description ?? "",
+    description: row.description ?? "",
+    onSale: Boolean(row.on_sale && row.sale_price_crc != null),
+    inStock: row.in_stock,
+    stockStatus,
+    stockQty: row.stock_qty,
+    priceCRC: Number(row.price_crc) || 0,
+    salePriceCRC: row.sale_price_crc == null ? null : Number(row.sale_price_crc),
+    images,
+    categories,
+    brand: row.brand?.name ? decodeHtml(row.brand.name) : null,
+  };
+}
+
+async function databaseProductBySlug(slug: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, woo_id, sku, slug, name, short_description, description, price_crc, sale_price_crc, on_sale, in_stock, stock_qty, brand:brands(name), product_images(url, alt, position), product_categories(category:categories(id, name, slug))"
+    )
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) {
+    warnQuery("databaseProductBySlug", error);
+    return null;
+  }
+  return data ? productFromDatabase(data as unknown as DatabaseProduct) : null;
 }
 
 function appendParam(
@@ -453,6 +527,11 @@ export async function getAllProducts(opts?: {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
+    // La base propia es la fuente actual del catálogo. El snapshot solo queda
+    // como respaldo para los productos históricos mientras se completa la
+    // sincronización pública.
+    const databaseProduct = await databaseProductBySlug(slug);
+    if (databaseProduct) return databaseProduct;
     const result = await productCollection({ slug, per_page: 1 });
     return result.items[0] ? productFromWoo(result.items[0]) : null;
   } catch (error) {

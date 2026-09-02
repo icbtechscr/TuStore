@@ -3,6 +3,7 @@ import { Plus, Search } from "lucide-react";
 import { adminListProducts } from "@/lib/admin";
 import { STOCK_LABELS, type StockStatus } from "@/lib/stock";
 import { formatCRC } from "@/lib/utils";
+import { ProductImage } from "@/components/ProductImage";
 import { ProductRowActions } from "@/components/admin/ProductRowActions";
 
 export const dynamic = "force-dynamic";
@@ -170,11 +171,11 @@ export default async function AdminProductsPage({
                       <div className="flex items-center gap-3">
                         <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-ink-200 bg-white">
                           {img?.url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <ProductImage
                               src={img.url}
                               alt={p.name}
-                              className="size-full object-contain p-1"
+                              sizes="48px"
+                              className="p-1"
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center text-[10px] text-ink-400">

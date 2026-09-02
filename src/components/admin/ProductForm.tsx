@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { toWebp } from "@/lib/image-optimize";
+import { ProductImage } from "@/components/ProductImage";
 import {
   STOCK_LABELS,
   STOCK_STATUSES,
@@ -375,11 +376,11 @@ export function ProductForm({
                 >
                   <div className="relative aspect-square overflow-hidden rounded-lg border border-ink-200 bg-white">
                     {img.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <ProductImage
                         src={img.url}
                         alt={img.alt}
-                        className="size-full object-contain p-1"
+                        sizes="64px"
+                        className="p-1"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[10px] text-ink-400">
