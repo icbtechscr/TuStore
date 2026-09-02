@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, Mail, LogIn } from "lucide-react";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
-import { getUserRole } from "@/lib/roles";
 
 export function IngresarForm() {
   const router = useRouter();
@@ -17,21 +15,18 @@ export function IngresarForm() {
     setError(null);
     setLoading(true);
     try {
-      const sb = createSupabaseBrowser();
-      const { data, error } = await sb.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      if (error) {
-        setError(
-          error.message === "Invalid login credentials"
-            ? "Correo o contraseña incorrectos."
-            : error.message
-        );
+      const result = (await response.json()) as { error?: string; role?: string };
+      if (!response.ok) {
+        setError(result.error ?? "No se pudo iniciar sesión.");
         return;
       }
       // Redirección según rol: admin -> panel, colaborador -> su portal.
-      const dest = getUserRole(data.user) === "admin" ? "/admin" : "/portal";
+      const dest = result.role === "colaborador" ? "/portal" : "/admin";
       router.replace(dest);
       router.refresh();
     } catch (e) {

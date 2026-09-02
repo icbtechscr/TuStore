@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
 
 export function LoginForm() {
   const router = useRouter();
@@ -16,17 +15,14 @@ export function LoginForm() {
     setError(null);
     setLoading(true);
     try {
-      const sb = createSupabaseBrowser();
-      const { error } = await sb.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      if (error) {
-        setError(
-          error.message === "Invalid login credentials"
-            ? "Correo o contraseña incorrectos."
-            : error.message
-        );
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setError(result.error ?? "No se pudo iniciar sesión.");
         return;
       }
       router.replace("/admin");
