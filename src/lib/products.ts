@@ -1,6 +1,10 @@
 import "server-only";
 import { decodeHtml } from "./utils";
-import type { StockStatus } from "./stock";
+import {
+  normalizeStockStatus,
+  readStockStatusAttribute,
+  type StockStatus,
+} from "./stock";
 import { supabase } from "./supabase";
 import { rewriteMediaUrl } from "./image-url";
 import catalogSnapshot from "../../data/tustore-woo-snapshot.json";
@@ -227,13 +231,18 @@ type DatabaseProduct = {
   sale_price_crc: number | null;
   on_sale: boolean;
   in_stock: boolean;
+  stock_status?: StockStatus | null;
   stock_qty: number | null;
+  attributes?: Record<string, unknown> | null;
   brand?: { name: string } | null;
   product_images?: { url: string; alt: string | null; position: number }[];
   product_categories?: {
     category: { id: string; name: string; slug: string } | null;
   }[];
 };
+
+const DATABASE_PRODUCT_SELECT =
+  "id, woo_id, sku, slug, name, short_description, description, price_crc, sale_price_crc, on_sale, in_stock, stock_qty, attributes, brand:brands(name), product_images(url, alt, position), product_categories(category:categories(id, name, slug))";
 
 function productFromDatabase(row: DatabaseProduct): Product {
   const images = [...(row.product_images ?? [])]
@@ -251,7 +260,10 @@ function productFromDatabase(row: DatabaseProduct): Product {
       name: decodeHtml(category.name),
       slug: category.slug,
     }));
-  const stockStatus: StockStatus = row.in_stock ? "in_stock" : "out_of_stock";
+  const stockStatus = normalizeStockStatus(
+    row.stock_status ?? readStockStatusAttribute(row.attributes),
+    row.in_stock
+  );
   return {
     id: row.id,
     wooId: row.woo_id,
@@ -275,9 +287,7 @@ function productFromDatabase(row: DatabaseProduct): Product {
 async function databaseProductBySlug(slug: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
-    .select(
-      "id, woo_id, sku, slug, name, short_description, description, price_crc, sale_price_crc, on_sale, in_stock, stock_qty, brand:brands(name), product_images(url, alt, position), product_categories(category:categories(id, name, slug))"
-    )
+    .select(DATABASE_PRODUCT_SELECT)
     .eq("slug", slug)
     .maybeSingle();
   if (error) {
@@ -574,6 +584,15 @@ export async function getProductCategoryBreadcrumb(
 
 export async function getFeaturedProducts(limit = 10): Promise<Product[]> {
   try {
+    const fromDatabase = await databaseCatalogProducts({
+      sort: "nuevos",
+      perPage: Math.min(Math.max(limit * 3, 40), 100),
+    });
+    if (fromDatabase) {
+      return fromDatabase.products
+        .filter((product) => product.inStock || product.stockStatus === "backorder")
+        .slice(0, limit);
+    }
     const result = await productCollection({
       per_page: limit,
       orderby: "date",
@@ -589,6 +608,16 @@ export async function getFeaturedProducts(limit = 10): Promise<Product[]> {
 
 export async function getOnSaleProducts(limit = 8): Promise<Product[]> {
   try {
+    const fromDatabase = await databaseCatalogProducts({
+      perPage: Math.min(Math.max(limit * 4, 40), 100),
+    });
+    if (fromDatabase) {
+      return fromDatabase.products
+        .filter((product) =>
+          product.onSale && (product.inStock || product.stockStatus === "backorder")
+        )
+        .slice(0, limit);
+    }
     const query = {
       on_sale: true,
       stock_status: ["instock", "onbackorder"],
@@ -611,6 +640,8 @@ export async function getOnSaleProducts(limit = 8): Promise<Product[]> {
 
 export async function getProductById(id: string): Promise<Product | null> {
   try {
+    const fromDatabase = await databaseProductsByIds([id]);
+    if (fromDatabase[0]) return fromDatabase[0];
     const result = await productCollection({ include: id, per_page: 1 });
     return result.items[0] ? productFromWoo(result.items[0]) : null;
   } catch (error) {
@@ -622,6 +653,8 @@ export async function getProductById(id: string): Promise<Product | null> {
 export async function getProductsByIds(ids: string[]): Promise<Product[]> {
   if (!ids.length) return [];
   try {
+    const fromDatabase = await databaseProductsByIds(ids);
+    if (fromDatabase.length) return fromDatabase;
     const result = await productCollection({
       include: ids.join(","),
       per_page: Math.min(ids.length, 100),
@@ -935,12 +968,146 @@ function stockApiValue(stock: CatalogStock | undefined): string[] | undefined {
   return undefined;
 }
 
+function databaseOrder(sort: CatalogSort | undefined) {
+  switch (sort) {
+    case "precio-asc":
+      return { column: "price_crc", ascending: true };
+    case "precio-desc":
+      return { column: "price_crc", ascending: false };
+    case "nuevos":
+      return { column: "created_at", ascending: false };
+    case "nombre":
+      return { column: "name", ascending: true };
+    default:
+      return { column: "updated_at", ascending: false };
+  }
+}
+
+async function databaseCategoryId(slug: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ? String(data.id) : null;
+}
+
+async function databaseBrandId(name: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("brands")
+    .select("id")
+    .ilike("name", name)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ? String(data.id) : null;
+}
+
+async function databaseProductIdsForCategory(categoryId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("product_categories")
+    .select("product_id")
+    .eq("category_id", categoryId);
+  if (error) throw error;
+  return (data ?? []).map((row) => String(row.product_id));
+}
+
+async function databaseCatalogProducts(
+  params: CatalogParams
+): Promise<{ products: Product[]; total: number } | null> {
+  const page = Math.max(1, params.page ?? 1);
+  const perPage = Math.min(Math.max(1, params.perPage ?? 40), 100);
+  const from = (page - 1) * perPage;
+  const to = from + perPage - 1;
+  const order = databaseOrder(params.sort);
+  let query = supabase
+    .from("products")
+    .select(DATABASE_PRODUCT_SELECT, { count: "exact" })
+    .order(order.column, { ascending: order.ascending })
+    .range(from, to);
+
+  const search = params.q?.trim();
+  if (search) {
+    // Evita romper la expresión PostgREST si el usuario incluye separadores.
+    const safeSearch = search.replace(/[(),]/g, " ");
+    query = query.or(
+      `name.ilike.%${safeSearch}%,sku.ilike.%${safeSearch}%,slug.ilike.%${safeSearch}%`
+    );
+  }
+  // La base actual guarda el estado nuevo en `attributes.icb_stock_status`
+  // (y conserva `in_stock` para compatibilidad con el catálogo anterior).
+  if (params.stock === "in") query = query.eq("in_stock", true);
+  if (params.stock === "out") query = query.eq("in_stock", false);
+  if (params.stock === "backorder") {
+    query = query.eq("attributes->>icb_stock_status", "backorder");
+  }
+
+  if (params.brand) {
+    const brandId = await databaseBrandId(params.brand);
+    if (!brandId) return { products: [], total: 0 };
+    query = query.eq("brand_id", brandId);
+  }
+  if (params.category) {
+    const categoryId = await databaseCategoryId(params.category);
+    if (!categoryId) return { products: [], total: 0 };
+    const productIds = await databaseProductIdsForCategory(categoryId);
+    if (!productIds.length) return { products: [], total: 0 };
+    query = query.in("id", productIds);
+  }
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return {
+    products: ((data ?? []) as unknown as DatabaseProduct[]).map(productFromDatabase),
+    total: count ?? 0,
+  };
+}
+
+async function databaseProductsByIds(ids: string[]): Promise<Product[]> {
+  const uuidIds = ids.filter((id) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+  );
+  const wooIds = ids
+    .filter((id) => /^\d+$/.test(id))
+    .map((id) => Number(id));
+  const rows: DatabaseProduct[] = [];
+
+  if (uuidIds.length) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(DATABASE_PRODUCT_SELECT)
+      .in("id", uuidIds);
+    if (error) throw error;
+    rows.push(...((data ?? []) as unknown as DatabaseProduct[]));
+  }
+  if (wooIds.length) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(DATABASE_PRODUCT_SELECT)
+      .in("woo_id", wooIds);
+    if (error) throw error;
+    rows.push(...((data ?? []) as unknown as DatabaseProduct[]));
+  }
+
+  const byId = new Map<string, Product>();
+  for (const product of rows.map(productFromDatabase)) {
+    byId.set(product.id, product);
+    if (product.wooId != null) byId.set(String(product.wooId), product);
+  }
+  return ids
+    .map((id) => byId.get(id))
+    .filter((product): product is Product => !!product);
+}
+
 export async function getCatalogProducts(
   params: CatalogParams
 ): Promise<{ products: Product[]; total: number }> {
   const page = Math.max(1, params.page ?? 1);
   const perPage = Math.min(Math.max(1, params.perPage ?? 40), 100);
   try {
+    const fromDatabase = await databaseCatalogProducts(params);
+    if (fromDatabase) return fromDatabase;
+
     const category = params.category ? await categoryBySlug(params.category) : null;
     const order = catalogOrder(params.sort);
     const query = {
