@@ -5,7 +5,7 @@ import {
   readStockStatusAttribute,
   type StockStatus,
 } from "./stock";
-import { supabase } from "./supabase";
+import { createAdminClient, supabase } from "./supabase";
 import { rewriteMediaUrl } from "./image-url";
 import catalogSnapshot from "../../data/tustore-woo-snapshot.json";
 
@@ -688,7 +688,8 @@ type DatabaseCategory = {
 };
 
 async function databaseCategoryTree(): Promise<CategoryNode[]> {
-  const { data: categoryRows, error: categoriesError } = await supabase
+  const database = createAdminClient();
+  const { data: categoryRows, error: categoriesError } = await database
     .from("categories")
     .select("id, name, slug, parent_id")
     .order("name", { ascending: true });
@@ -697,7 +698,7 @@ async function databaseCategoryTree(): Promise<CategoryNode[]> {
   const linkRows: { category_id: string; product_id: string }[] = [];
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
-    const { data, error } = await supabase
+    const { data, error } = await database
       .from("product_categories")
       .select("category_id, product_id")
       .order("category_id", { ascending: true })
