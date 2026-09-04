@@ -29,11 +29,12 @@ export function NavHeader({ items }: { items: NavItem[] }) {
   }
 
   return (
-    <ul
-      className="relative mx-auto flex w-full max-w-[1500px] items-center gap-1 overflow-x-auto px-2 py-1"
+    <div
+      className="relative mx-auto w-full max-w-[1500px]"
       onMouseLeave={() => setOpen(null)}
     >
-      <li className="relative z-10 shrink-0">
+      <ul className="flex items-center gap-1 overflow-x-auto px-2 py-1">
+        <li className="relative z-10 shrink-0">
         <Link
           href="/productos"
           className="inline-flex items-center gap-2 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-white/10"
@@ -41,9 +42,9 @@ export function NavHeader({ items }: { items: NavItem[] }) {
           <Menu className="size-4" />
           Categorías
         </Link>
-      </li>
+        </li>
 
-      {items.map((it) => {
+        {items.map((it) => {
         const hasMenu = it.children.length > 0;
         const isOpen = open === it.href;
         return (
@@ -63,7 +64,8 @@ export function NavHeader({ items }: { items: NavItem[] }) {
             </Link>
           </li>
         );
-      })}
+        })}
+      </ul>
 
       {active && (
         <div className="absolute inset-x-0 top-full z-50 pt-px">
@@ -123,6 +125,6 @@ export function NavHeader({ items }: { items: NavItem[] }) {
           </div>
         </div>
       )}
-    </ul>
+    </div>
   );
 }

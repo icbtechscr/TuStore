@@ -76,7 +76,19 @@ export function isPurchasableStock(
   status: StockStatus,
   stockQty: number | null | undefined
 ): boolean {
-  return effectiveStockStatus(status, stockQty) !== "out_of_stock";
+  return status === "in_stock" && stockOrderLimit(status, stockQty) !== 0;
+}
+
+export function isPurchasableProduct(
+  status: StockStatus,
+  stockQty: number | null | undefined,
+  unitPrice: number
+): boolean {
+  return (
+    isPurchasableStock(status, stockQty) &&
+    Number.isFinite(unitPrice) &&
+    unitPrice > 0
+  );
 }
 
 export function isMissingStockStatusError(error: unknown): boolean {

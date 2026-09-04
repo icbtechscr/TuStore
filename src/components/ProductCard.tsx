@@ -9,7 +9,11 @@ import {
 } from "@/components/ProductImage";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/lib/cart";
-import { STOCK_LABELS, effectiveStockStatus } from "@/lib/stock";
+import {
+  STOCK_LABELS,
+  effectiveStockStatus,
+  isPurchasableProduct,
+} from "@/lib/stock";
 import { formatCRC } from "@/lib/utils";
 
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
@@ -25,7 +29,12 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
       ? Math.round((1 - product.salePriceCRC / product.priceCRC) * 100)
       : null;
   const displayStockStatus = effectiveStockStatus(product.stockStatus, product.stockQty);
-  const canAddToCart = displayStockStatus !== "out_of_stock";
+  const unitPrice = product.salePriceCRC ?? product.priceCRC;
+  const canAddToCart = isPurchasableProduct(
+    product.stockStatus,
+    product.stockQty,
+    unitPrice
+  );
 
   function markUnavailable(src: string) {
     setFailedImages((currentFailed) => {
@@ -47,7 +56,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         name: product.name,
         image: img?.src ?? null,
         brand: product.brand,
-        unitPrice: product.salePriceCRC ?? product.priceCRC,
+        unitPrice,
         stockStatus: product.stockStatus,
         stockQty: product.stockQty,
       },
@@ -138,7 +147,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
 
             <button
               type="button"
-              aria-label="Agregar al carrito"
+              aria-label={canAddToCart ? "Agregar al carrito" : "No disponible para compra"}
               onClick={addToCart}
               disabled={!canAddToCart}
               className={`inline-flex h-10 shrink-0 items-center justify-center gap-1 rounded-md px-3 text-xs font-bold text-ink-900 shadow-sm transition-all duration-200 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 ${

@@ -4,15 +4,21 @@ import { motion } from "framer-motion";
 import { Trash2, Minus, Plus, ArrowRight, ShoppingBag, ChevronRight } from "lucide-react";
 import { ProductImage } from "@/components/ProductImage";
 import { useCart } from "@/lib/cart";
-import { STOCK_LABELS, stockOrderLimit } from "@/lib/stock";
+import {
+  STOCK_LABELS,
+  isPurchasableProduct,
+  stockOrderLimit,
+} from "@/lib/stock";
 import { formatCRC } from "@/lib/utils";
 
 export default function CartPage() {
   const { items, subtotal, count, setQty, remove } = useCart();
   const total = subtotal;
-  const MIN_ORDER = 10000;
-  const missing = Math.max(0, MIN_ORDER - subtotal);
-  const canCheckout = true;
+  const invalidItem = items.find(
+    (item) =>
+      !isPurchasableProduct(item.stockStatus, item.stockQty, item.unitPrice)
+  );
+  const canCheckout = items.length > 0 && !invalidItem;
 
   return (
     <div className="bg-white">
@@ -169,10 +175,12 @@ export default function CartPage() {
                     className="mt-6 inline-flex w-full cursor-not-allowed flex-col items-center justify-center rounded-full bg-ink-200 px-6 py-3 text-ink-600"
                   >
                     <span className="text-sm font-bold">
-                      Te faltan {formatCRC(missing)}
+                      Este pedido no se puede procesar
                     </span>
                     <span className="text-[11px] font-medium">
-                      Mínimo de compra {formatCRC(MIN_ORDER)}
+                      {invalidItem?.unitPrice === 0
+                        ? "Hay un producto cuyo precio requiere consulta"
+                        : "Hay un producto agotado o en contrapedido"}
                     </span>
                   </button>
                 )}

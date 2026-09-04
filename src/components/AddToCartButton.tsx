@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Check } from "lucide-react";
 import { useCart, type CartItem } from "@/lib/cart";
-import { stockOrderLimit } from "@/lib/stock";
+import { isPurchasableProduct } from "@/lib/stock";
 
 type Props = {
   product: Omit<CartItem, "qty">;
@@ -15,7 +15,11 @@ export function AddToCartButton({ product, disabled, className = "" }: Props) {
   const { add } = useCart();
   const router = useRouter();
   const [added, setAdded] = useState(false);
-  const unavailable = stockOrderLimit(product.stockStatus, product.stockQty) === 0;
+  const unavailable = !isPurchasableProduct(
+    product.stockStatus,
+    product.stockQty,
+    product.unitPrice
+  );
   const isDisabled = disabled || unavailable;
 
   function onClick() {

@@ -9,7 +9,11 @@ import { formatCRC, decodeHtml, stripHtml } from "@/lib/utils";
 import { parseKitDescription } from "@/lib/parseKit";
 import { ProductTabs } from "@/components/ProductTabs";
 import { SITE_NAME, SITE_OG_IMAGE_URL, SITE_URL, absoluteUrl } from "@/lib/site";
-import { STOCK_LABELS, effectiveStockStatus } from "@/lib/stock";
+import {
+  STOCK_LABELS,
+  effectiveStockStatus,
+  isPurchasableProduct,
+} from "@/lib/stock";
 
 // El layout raíz lee cookies() (modo noche + sesión), lo que vuelve dinámica
 // toda la app. Por eso esta página NO puede prerenderizarse de forma estática.
@@ -84,9 +88,12 @@ export default async function ProductPage({
     ? categoryBreadcrumb
     : [{ id: "catalog", name: "Catálogo", slug: "" }];
   const displayStockStatus = effectiveStockStatus(product.stockStatus, product.stockQty);
-  const canAddToCart = displayStockStatus !== "out_of_stock";
-
   const price = product.salePriceCRC ?? product.priceCRC;
+  const canAddToCart = isPurchasableProduct(
+    product.stockStatus,
+    product.stockQty,
+    price
+  );
   const productUrl = absoluteUrl(`/productos/${product.slug}`);
   const offers =
     price > 0
@@ -272,6 +279,15 @@ export default async function ProductPage({
                 <Heart className="size-5" />
               </button>
             </div>
+            {!canAddToCart && (
+              <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
+                {price <= 0
+                  ? "Este producto requiere consultar el precio antes de comprar."
+                  : displayStockStatus === "backorder"
+                    ? "Los productos en contrapedido no se pueden comprar desde la web."
+                    : "Este producto no está disponible para compra en este momento."}
+              </p>
+            )}
 
             <ul className="mt-6 grid grid-cols-3 gap-3 border-t border-ink-200 pt-5 text-[11px] text-ink-600">
               <li className="flex items-start gap-1.5">

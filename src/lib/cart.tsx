@@ -10,8 +10,8 @@ import {
 } from "react";
 import {
   clampOrderQty,
+  isPurchasableProduct,
   normalizeStockStatus,
-  stockOrderLimit,
   type StockStatus,
 } from "./stock";
 
@@ -55,7 +55,7 @@ function normalizeCartItem(item: Partial<CartItem>): CartItem | null {
       ? item.stockQty
       : null;
   const qty = clampOrderQty(Number(item.qty) || 1, stockStatus, stockQty);
-  if (stockOrderLimit(stockStatus, stockQty) === 0) return null;
+  if (!isPurchasableProduct(stockStatus, stockQty, item.unitPrice)) return null;
   return {
     id: item.id,
     slug: item.slug,
@@ -100,8 +100,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const add = useCallback<CartState["add"]>((item, qty = 1) => {
     setItems((prev) => {
       const stockStatus = normalizeStockStatus(item.stockStatus, true);
-      const limit = stockOrderLimit(stockStatus, item.stockQty);
-      if (limit === 0) return prev;
+      if (!isPurchasableProduct(stockStatus, item.stockQty, item.unitPrice)) {
+        return prev;
+      }
       const ex = prev.find((p) => p.id === item.id);
       if (ex) {
         return prev.map((p) =>

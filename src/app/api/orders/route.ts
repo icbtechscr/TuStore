@@ -8,7 +8,7 @@ import {
   requiresShippingMinimum,
 } from "@/lib/orders";
 import { distanceKm, ORIGIN, getZone } from "@/lib/shipping";
-import { stockOrderLimit } from "@/lib/stock";
+import { isPurchasableProduct, stockOrderLimit } from "@/lib/stock";
 import { notifyNewOrder } from "@/lib/email";
 
 type Body = {
@@ -93,15 +93,25 @@ export async function POST(req: Request) {
 
     for (const item of items) {
       const p = priceMap.get(item.id);
-      if (!p) continue;
-      const qty = Math.min(99, Math.max(1, Math.floor(item.qty)));
-      const stockLimit = stockOrderLimit(p.stockStatus, p.stockQty);
-      if (stockLimit === 0) {
-        return new NextResponse(
-          `No hay unidades disponibles de ${p.name}.`,
-          { status: 409 }
-        );
+      if (!p) {
+        return new NextResponse("Uno de los productos ya no está disponible.", {
+          status: 409,
+        });
       }
+      const qty = Math.min(99, Math.max(1, Math.floor(item.qty)));
+      const unitPrice = p.salePriceCRC ?? p.priceCRC;
+      if (!isPurchasableProduct(p.stockStatus, p.stockQty, unitPrice)) {
+        const reason =
+          unitPrice <= 0
+            ? "requiere consultar el precio"
+            : p.stockStatus === "backorder"
+              ? "está en contrapedido"
+              : "no tiene existencias disponibles";
+        return new NextResponse(`${p.name} ${reason} y no se puede procesar.`, {
+          status: 409,
+        });
+      }
+      const stockLimit = stockOrderLimit(p.stockStatus, p.stockQty);
       if (stockLimit !== null && qty > stockLimit) {
         return new NextResponse(
           `Solo hay ${stockLimit} unidad${stockLimit === 1 ? "" : "es"} disponible${stockLimit === 1 ? "" : "s"} de ${p.name}.`,
