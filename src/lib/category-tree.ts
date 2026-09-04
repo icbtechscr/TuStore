@@ -1,4 +1,7 @@
-import { getCategoryTree as loadCategoryTree } from "./products";
+import {
+  getCategoryTree as loadCategoryTree,
+  type CategoryNode,
+} from "./products";
 import { getSiteContent } from "./site-content";
 
 export type SubCategory = { name: string; slug: string; count: number };
@@ -8,6 +11,15 @@ export type NavItem = {
   href: string;
   children: NavSubNode[];
 };
+
+function toNavNode(category: CategoryNode): NavSubNode {
+  return {
+    name: category.name,
+    slug: category.slug,
+    count: category.count,
+    children: category.children.map(toNavNode),
+  };
+}
 
 const NAV_ITEMS = [
   { label: "Inicio", href: "/", slug: null },
@@ -42,7 +54,7 @@ export async function getNavMenu(): Promise<NavItem[]> {
         .filter(
           (child, index, all) => all.findIndex((candidate) => candidate.slug === child.slug) === index
         )
-        .map((child) => ({ ...child, children: [] }));
+        .map(toNavNode);
 
       return {
         label: item.label || "Sin nombre",

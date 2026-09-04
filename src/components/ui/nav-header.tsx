@@ -55,6 +55,7 @@ export function NavHeader({ items }: { items: NavItem[] }) {
           >
             <Link
               href={it.href}
+              onFocus={() => setOpen(it.href)}
               className={`inline-flex items-center gap-1 whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold transition-colors md:px-4 ${
                 isOpen && hasMenu ? "text-accent-300" : "text-white hover:text-accent-300"
               }`}
@@ -69,7 +70,7 @@ export function NavHeader({ items }: { items: NavItem[] }) {
 
       {active && (
         <div className="absolute inset-x-0 top-full z-50 pt-px">
-          <div className="rounded-b-md border border-t-0 border-ink-200 bg-white p-5 shadow-xl">
+          <div className="max-h-[70vh] overflow-auto rounded-b-md border border-t-0 border-ink-200 bg-white p-5 shadow-xl">
             {columns.length > 0 && (
               <div className="flex items-start gap-2 overflow-x-auto">
                 {columns.map((col, ci) => (
@@ -96,6 +97,12 @@ export function NavHeader({ items }: { items: NavItem[] }) {
                         >
                           <Link
                             href={`/categoria/${node.slug}`}
+                            onFocus={() =>
+                              setPath((current) => [
+                                ...current.slice(0, ci),
+                                node,
+                              ])
+                            }
                             className={`flex items-center justify-between gap-3 rounded px-2 py-1.5 text-sm transition-colors ${
                               isActive
                                 ? "bg-brand-50 font-semibold text-brand-600"

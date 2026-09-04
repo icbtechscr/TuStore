@@ -677,8 +677,90 @@ export type CategoryGroup = {
 };
 
 export type CategoryNode = CategoryGroup & {
-  children: CategoryGroup[];
+  children: CategoryNode[];
 };
+
+type DatabaseCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id: string | null;
+};
+
+async function databaseCategoryTree(): Promise<CategoryNode[]> {
+  const { data: categoryRows, error: categoriesError } = await supabase
+    .from("categories")
+    .select("id, name, slug, parent_id")
+    .order("name", { ascending: true });
+  if (categoriesError) throw categoriesError;
+
+  const linkRows: { category_id: string; product_id: string }[] = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("product_categories")
+      .select("category_id, product_id")
+      .order("category_id", { ascending: true })
+      .order("product_id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const page = (data ?? []) as { category_id: string; product_id: string }[];
+    linkRows.push(...page);
+    if (page.length < pageSize) break;
+  }
+
+  const categories = (categoryRows ?? []) as DatabaseCategory[];
+  const knownIds = new Set(categories.map((category) => category.id));
+  const directCounts = new Map<string, number>();
+  for (const row of linkRows) {
+    directCounts.set(row.category_id, (directCounts.get(row.category_id) ?? 0) + 1);
+  }
+
+  const childrenByParent = new Map<string, DatabaseCategory[]>();
+  for (const category of categories) {
+    if (!category.parent_id) continue;
+    const siblings = childrenByParent.get(category.parent_id) ?? [];
+    siblings.push(category);
+    childrenByParent.set(category.parent_id, siblings);
+  }
+
+  function buildNode(
+    category: DatabaseCategory,
+    ancestors = new Set<string>()
+  ): CategoryNode {
+    if (ancestors.has(category.id)) {
+      return {
+        id: category.id,
+        name: decodeHtml(category.name),
+        slug: category.slug,
+        count: directCounts.get(category.id) ?? 0,
+        children: [],
+      };
+    }
+    const nextAncestors = new Set(ancestors).add(category.id);
+    const children = (childrenByParent.get(category.id) ?? [])
+      .map((child) => buildNode(child, nextAncestors))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "es"));
+    return {
+      id: category.id,
+      name: decodeHtml(category.name),
+      slug: category.slug,
+      count:
+        (directCounts.get(category.id) ?? 0) +
+        children.reduce((total, child) => total + child.count, 0),
+      children,
+    };
+  }
+
+  return categories
+    .filter(
+      (category) =>
+        (!category.parent_id || !knownIds.has(category.parent_id)) &&
+        category.slug !== "productos-varios"
+    )
+    .map((category) => buildNode(category))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
 
 function publicRootCategories(categories: WooCategory[]): WooCategory[] {
   return categories.filter(
@@ -691,23 +773,26 @@ function publicRootCategories(categories: WooCategory[]): WooCategory[] {
 
 export async function getCategoryTree(): Promise<CategoryNode[]> {
   try {
+    try {
+      const databaseTree = await databaseCategoryTree();
+      if (databaseTree.length > 0) return databaseTree;
+    } catch (error) {
+      warnQuery("databaseCategoryTree", error);
+    }
+
     const categories = await allCategories();
+    const buildSnapshotNode = (category: WooCategory): CategoryNode => ({
+      id: String(category.id),
+      name: decodeHtml(category.name),
+      slug: category.slug,
+      count: category.count,
+      children: categories
+        .filter((child) => child.parent === category.id && child.count > 0)
+        .map(buildSnapshotNode)
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "es")),
+    });
     return publicRootCategories(categories)
-      .map((root) => ({
-        id: String(root.id),
-        name: decodeHtml(root.name),
-        slug: root.slug,
-        count: root.count,
-        children: categories
-          .filter((category) => category.parent === root.id && category.count > 0)
-          .map((category) => ({
-            id: String(category.id),
-            name: decodeHtml(category.name),
-            slug: category.slug,
-            count: category.count,
-          }))
-          .sort((a, b) => b.count - a.count),
-      }))
+      .map(buildSnapshotNode)
       .sort((a, b) => a.name.localeCompare(b.name, "es"));
   } catch (error) {
     warnQuery("getCategoryTree", error);
