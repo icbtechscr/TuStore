@@ -21,6 +21,14 @@ function toNavNode(category: CategoryNode): NavSubNode {
   };
 }
 
+function comparableLabel(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase("es");
+}
+
 const NAV_ITEMS = [
   { label: "Inicio", href: "/", slug: null },
   { label: "Computación", href: "/categoria/computacion", slug: "computacion" },
@@ -42,7 +50,13 @@ export async function getNavMenu(): Promise<NavItem[]> {
     const configured = (await getSiteContent()).navbar.items;
     return configured.map((item) => {
       const primarySlug = item.categorySlug;
-      const primary = primarySlug ? bySlug.get(primarySlug) : undefined;
+      const primary = primarySlug
+        ? bySlug.get(primarySlug) ??
+          tree.find(
+            (category) =>
+              comparableLabel(category.name) === comparableLabel(item.label)
+          )
+        : undefined;
       const extraCategories = item.categorySlugs
         .map((slug) => bySlug.get(slug))
         .filter((category): category is NonNullable<typeof category> => !!category);
