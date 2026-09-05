@@ -304,10 +304,39 @@ async function databaseProductBySku(sku: string): Promise<Product | null> {
     .from("products")
     .select(DATABASE_PRODUCT_SELECT)
     .eq("sku", sku)
-    .limit(1)
-    .maybeSingle();
+    .limit(2);
   if (error) throw error;
-  return data ? productFromDatabase(data as unknown as DatabaseProduct) : null;
+  return data?.length === 1
+    ? productFromDatabase(data[0] as unknown as DatabaseProduct)
+    : null;
+}
+
+async function databaseProductByWooId(wooId: number): Promise<Product | null> {
+  const database = createAdminClient();
+  const { data, error } = await database
+    .from("products")
+    .select(DATABASE_PRODUCT_SELECT)
+    .eq("woo_id", wooId)
+    .limit(2);
+  if (error) throw error;
+  return data?.length === 1
+    ? productFromDatabase(data[0] as unknown as DatabaseProduct)
+    : null;
+}
+
+async function databaseProductByNormalizedName(name: string): Promise<Product | null> {
+  const database = createAdminClient();
+  const { data, error } = await database
+    .from("products")
+    .select("id, name")
+    .limit(1000);
+  if (error) throw error;
+  const normalizedName = normalizedSearchText(name);
+  const matches = (data ?? []).filter(
+    (product) => normalizedSearchText(String(product.name)) === normalizedName
+  );
+  if (matches.length !== 1) return null;
+  return (await databaseProductsByIds([String(matches[0].id)]))[0] ?? null;
 }
 
 function appendParam(
@@ -558,10 +587,19 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     // Mantiene funcionando un enlace antiguo únicamente cuando su SKU todavía
     // identifica un producto administrado. Precio, stock, fotos y descripción
     // se leen siempre de Supabase, nunca del snapshot.
-    const legacySku = SNAPSHOT_PRODUCTS.find(
+    const legacyProduct = SNAPSHOT_PRODUCTS.find(
       (legacyProduct) => legacyProduct.slug === slug
-    )?.sku?.trim();
-    return legacySku ? await databaseProductBySku(legacySku) : null;
+    );
+    if (!legacyProduct) return null;
+
+    const legacySku = legacyProduct.sku?.trim();
+    if (legacySku) {
+      const bySku = await databaseProductBySku(legacySku);
+      if (bySku) return bySku;
+    }
+    const byWooId = await databaseProductByWooId(legacyProduct.id);
+    if (byWooId) return byWooId;
+    return databaseProductByNormalizedName(decodeHtml(legacyProduct.name));
   } catch (error) {
     warnQuery("getProductBySlug", error);
     return null;
