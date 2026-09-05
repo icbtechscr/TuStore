@@ -311,19 +311,6 @@ async function databaseProductBySku(sku: string): Promise<Product | null> {
     : null;
 }
 
-async function databaseProductByWooId(wooId: number): Promise<Product | null> {
-  const database = createAdminClient();
-  const { data, error } = await database
-    .from("products")
-    .select(DATABASE_PRODUCT_SELECT)
-    .eq("woo_id", wooId)
-    .limit(2);
-  if (error) throw error;
-  return data?.length === 1
-    ? productFromDatabase(data[0] as unknown as DatabaseProduct)
-    : null;
-}
-
 async function databaseProductByNormalizedName(name: string): Promise<Product | null> {
   const database = createAdminClient();
   const { data, error } = await database
@@ -597,8 +584,6 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       const bySku = await databaseProductBySku(legacySku);
       if (bySku) return bySku;
     }
-    const byWooId = await databaseProductByWooId(legacyProduct.id);
-    if (byWooId) return byWooId;
     return databaseProductByNormalizedName(decodeHtml(legacyProduct.name));
   } catch (error) {
     warnQuery("getProductBySlug", error);
