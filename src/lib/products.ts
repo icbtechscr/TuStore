@@ -230,6 +230,7 @@ type DatabaseProduct = {
   price_crc: number;
   sale_price_crc: number | null;
   on_sale: boolean;
+  is_visible: boolean;
   in_stock: boolean;
   stock_status?: StockStatus | null;
   stock_qty: number | null;
@@ -242,7 +243,7 @@ type DatabaseProduct = {
 };
 
 const DATABASE_PRODUCT_SELECT =
-  "id, woo_id, sku, slug, name, short_description, description, price_crc, sale_price_crc, on_sale, in_stock, stock_qty, attributes, brand:brands(name), product_images(url, alt, position), product_categories(category:categories(id, name, slug))";
+  "id, woo_id, sku, slug, name, short_description, description, price_crc, sale_price_crc, on_sale, is_visible, in_stock, stock_qty, attributes, brand:brands(name), product_images(url, alt, position), product_categories(category:categories(id, name, slug))";
 
 function productFromDatabase(row: DatabaseProduct): Product {
   const images = [...(row.product_images ?? [])]
@@ -290,6 +291,7 @@ async function databaseProductBySlug(slug: string): Promise<Product | null> {
     .from("products")
     .select(DATABASE_PRODUCT_SELECT)
     .eq("slug", slug)
+    .eq("is_visible", true)
     .maybeSingle();
   if (error) {
     warnQuery("databaseProductBySlug", error);
@@ -304,6 +306,7 @@ async function databaseProductBySku(sku: string): Promise<Product | null> {
     .from("products")
     .select(DATABASE_PRODUCT_SELECT)
     .eq("sku", sku)
+    .eq("is_visible", true)
     .limit(2);
   if (error) throw error;
   return data?.length === 1
@@ -316,6 +319,7 @@ async function databaseProductByNormalizedName(name: string): Promise<Product | 
   const { data, error } = await database
     .from("products")
     .select("id, name")
+    .eq("is_visible", true)
     .limit(1000);
   if (error) throw error;
   const normalizedName = normalizedSearchText(name);
@@ -758,7 +762,8 @@ async function databaseCategoryTree(): Promise<CategoryNode[]> {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await database
       .from("product_categories")
-      .select("category_id, product_id")
+      .select("category_id, product_id, product:products!inner(is_visible)")
+      .eq("product.is_visible", true)
       .order("category_id", { ascending: true })
       .order("product_id", { ascending: true })
       .range(from, from + pageSize - 1);
@@ -1076,6 +1081,7 @@ export async function getProductSlugs(limit = 100): Promise<string[]> {
     const { data, error } = await database
       .from("products")
       .select("slug")
+      .eq("is_visible", true)
       .limit(Math.max(1, limit));
     if (error) throw error;
     return (data ?? []).map((product) => String(product.slug));
@@ -1099,6 +1105,7 @@ export async function getAllProductSlugs(): Promise<
       const { data, error } = await database
         .from("products")
         .select("slug, updated_at, product_images(url, position)")
+        .eq("is_visible", true)
         .order("slug", { ascending: true })
         .range(from, from + pageSize - 1);
       if (error) throw error;
@@ -1269,6 +1276,7 @@ async function databaseCatalogProducts(
   let query = database
     .from("products")
     .select(DATABASE_PRODUCT_SELECT, { count: "exact" })
+    .eq("is_visible", true)
     .order(order.column, { ascending: order.ascending })
     .range(from, to);
 
@@ -1316,7 +1324,8 @@ async function databaseProductsByIds(ids: string[]): Promise<Product[]> {
     const { data, error } = await database
       .from("products")
       .select(DATABASE_PRODUCT_SELECT)
-      .in("id", uuidIds.slice(start, start + chunkSize));
+      .in("id", uuidIds.slice(start, start + chunkSize))
+      .eq("is_visible", true);
     if (error) throw error;
     rows.push(...((data ?? []) as unknown as DatabaseProduct[]));
   }
@@ -1324,7 +1333,8 @@ async function databaseProductsByIds(ids: string[]): Promise<Product[]> {
     const { data, error } = await database
       .from("products")
       .select(DATABASE_PRODUCT_SELECT)
-      .in("woo_id", wooIds.slice(start, start + chunkSize));
+      .in("woo_id", wooIds.slice(start, start + chunkSize))
+      .eq("is_visible", true);
     if (error) throw error;
     rows.push(...((data ?? []) as unknown as DatabaseProduct[]));
   }

@@ -29,6 +29,7 @@ export type AdminProduct = {
   price_crc: number;
   sale_price_crc: number | null;
   on_sale: boolean;
+  is_visible: boolean;
   in_stock: boolean;
   stock_status: StockStatus;
   stock_qty: number | null;
@@ -43,7 +44,7 @@ export type AdminProduct = {
 
 const SELECT_WITH_STOCK_STATUS = `
   id, woo_id, name, slug, sku, short_description, description,
-  price_crc, sale_price_crc, on_sale, in_stock, stock_status, stock_qty, attributes, brand_id, created_at, updated_at,
+  price_crc, sale_price_crc, on_sale, is_visible, in_stock, stock_status, stock_qty, attributes, brand_id, created_at, updated_at,
   brand:brands ( id, name ),
   product_images ( id, url, alt, position ),
   product_categories ( category:categories ( id, name, slug ) )
@@ -51,7 +52,7 @@ const SELECT_WITH_STOCK_STATUS = `
 
 const SELECT_LEGACY_STOCK = `
   id, woo_id, name, slug, sku, short_description, description,
-  price_crc, sale_price_crc, on_sale, in_stock, stock_qty, attributes, brand_id, created_at, updated_at,
+  price_crc, sale_price_crc, on_sale, is_visible, in_stock, stock_qty, attributes, brand_id, created_at, updated_at,
   brand:brands ( id, name ),
   product_images ( id, url, alt, position ),
   product_categories ( category:categories ( id, name, slug ) )
@@ -78,6 +79,7 @@ export async function adminListProducts(opts: {
   onSale?: boolean;
   outOfStock?: boolean;
   stockStatus?: StockStatus;
+  visibility?: "visible" | "hidden";
 }): Promise<{ products: AdminProduct[]; total: number }> {
   const sb = createAdminClient();
   const page = opts.page ?? 1;
@@ -98,6 +100,8 @@ export async function adminListProducts(opts: {
       query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,slug.ilike.%${q}%`);
     }
     if (opts.onSale) query = query.eq("on_sale", true);
+    if (opts.visibility === "visible") query = query.eq("is_visible", true);
+    if (opts.visibility === "hidden") query = query.eq("is_visible", false);
     if (opts.stockStatus) {
       query = hasStockStatus
         ? query.eq("stock_status", opts.stockStatus)
@@ -343,6 +347,7 @@ export type ProductWritePayload = {
   price_crc: number;
   sale_price_crc?: number | null;
   on_sale?: boolean;
+  is_visible?: boolean;
   in_stock?: boolean;
   stock_status?: StockStatus;
   stock_qty?: number | null;
@@ -361,6 +366,7 @@ export async function adminCreateProduct(payload: ProductWritePayload): Promise<
     ...row,
     slug: slugify(row.slug || "") || slugify(row.name) || `producto-${Date.now()}`,
     on_sale: row.on_sale ?? false,
+    is_visible: row.is_visible ?? true,
     stock_status: stockStatus,
     in_stock: stockStatusToLegacyInStock(stockStatus),
     attributes: writeStockStatusAttribute(null, stockStatus),
