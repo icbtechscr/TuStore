@@ -38,6 +38,8 @@ export type PromotionalBanner = {
   imageUrl: string;
   altText: string;
   productId: string | null;
+  // Ruta interna o URL externa. Tiene prioridad sobre productId cuando existe.
+  linkUrl: string;
 };
 
 export type PromotionalBannersContent = {
@@ -166,9 +168,9 @@ export const DEFAULT_CONTENT: SiteContent = {
     productIds: [],
   },
   banners: {
-    left: { imageUrl: "", altText: "Banner publicitario izquierdo", productId: null },
-    center: { imageUrl: "", altText: "Banner promocional", productId: null },
-    right: { imageUrl: "", altText: "Banner publicitario derecho", productId: null },
+    left: { imageUrl: "", altText: "Banner publicitario izquierdo", productId: null, linkUrl: "" },
+    center: { imageUrl: "", altText: "Banner promocional", productId: null, linkUrl: "" },
+    right: { imageUrl: "", altText: "Banner publicitario derecho", productId: null, linkUrl: "" },
   },
   cta: {
     eyebrow: "¿Necesitás asesoría?",
@@ -266,6 +268,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       (stored.get(key) ?? undefined) as Record<string, unknown> | undefined;
     const hero = mergeSection("hero", section("hero"));
 
+    const banners = mergeSection("banners", section("banners"));
     return {
       hero: {
         ...hero,
@@ -279,7 +282,13 @@ export async function getSiteContent(): Promise<SiteContent> {
       categories: mergeSection("categories", section("categories")),
       ofertas: mergeSection("ofertas", section("ofertas")),
       destacados: mergeSection("destacados", section("destacados")),
-      banners: mergeSection("banners", section("banners")),
+      // Incluye linkUrl al leer banners guardados antes de agregar enlaces
+      // personalizados, sin requerir migrar manualmente los datos existentes.
+      banners: {
+        left: { ...DEFAULT_CONTENT.banners.left, ...banners.left },
+        center: { ...DEFAULT_CONTENT.banners.center, ...banners.center },
+        right: { ...DEFAULT_CONTENT.banners.right, ...banners.right },
+      },
       cta: mergeSection("cta", section("cta")),
       footer: mergeSection("footer", section("footer")),
       navbar: {

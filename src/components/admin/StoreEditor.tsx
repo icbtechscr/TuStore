@@ -106,19 +106,19 @@ const BANNER_SLOTS: {
     key: "left",
     title: "Banner lateral izquierdo",
     description: "Se muestra en pantallas grandes, a la izquierda del banner central.",
-    dimensions: "Proporción recomendada: 160 × 600 px",
+    dimensions: "Tamaño recomendado: 600 × 3000 px",
   },
   {
     key: "center",
     title: "Banner central",
     description: "Banner principal horizontal, arriba de la página de inicio.",
-    dimensions: "Proporción recomendada: 1600 × 500 px",
+    dimensions: "Tamaño recomendado: 1600 × 500 px",
   },
   {
     key: "right",
     title: "Banner lateral derecho",
     description: "Se muestra en pantallas grandes, a la derecha del banner central.",
-    dimensions: "Proporción recomendada: 160 × 600 px",
+    dimensions: "Tamaño recomendado: 600 × 3000 px",
   },
 ];
 
@@ -145,14 +145,14 @@ function BannersEditor({
 
   function pickProduct(key: keyof PromotionalBannersContent, product: ProductLite) {
     cache.current.set(product.id, product);
-    update(key, { productId: product.id });
+    update(key, { productId: product.id, linkUrl: "" });
     forceRender((value) => value + 1);
   }
 
   return (
     <Card
       title="1 · Banners promocionales"
-      description="Subí una imagen y vinculala a un producto. Al tocar el banner, la persona irá directamente a la ficha de ese producto."
+      description="Subí una imagen y definí su destino: una ficha de producto o un enlace a una categoría, catálogo, promoción o página externa."
       onSave={() => save(form)}
       saving={saving}
       status={status}
@@ -195,6 +195,22 @@ function BannersEditor({
                 />
               </div>
               <div className="mt-3">
+                <Text
+                  label="Enlace al que dirige (opcional)"
+                  value={banner.linkUrl}
+                  placeholder="Ej.: /categoria/computacion o /productos"
+                  onChange={(linkUrl) =>
+                    update(slot.key, {
+                      linkUrl,
+                      productId: linkUrl.trim() ? null : banner.productId,
+                    })
+                  }
+                />
+                <p className="mt-1 text-[11px] text-ink-500">
+                  Usá una ruta como <code>/categoria/seguridad</code> o una URL completa. Al escribir un enlace se desliga el producto.
+                </p>
+              </div>
+              <div className="mt-3">
                 <Label>Producto al que dirige</Label>
                 {product ? (
                   <ProductChip
@@ -203,7 +219,9 @@ function BannersEditor({
                   />
                 ) : (
                   <p className="mb-2 text-xs text-ink-500">
-                    Sin producto vinculado: la imagen se verá, pero no llevará a una ficha.
+                    {banner.linkUrl.trim()
+                      ? "El enlace personalizado será el destino del banner."
+                      : "Sin enlace ni producto: la imagen se verá, pero no llevará a una ficha."}
                   </p>
                 )}
                 <div className="mt-2">

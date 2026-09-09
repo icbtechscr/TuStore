@@ -14,6 +14,16 @@ function Banner({
 }) {
   if (!banner.imageUrl) return null;
 
+  // Solo permitimos rutas de TUStore o enlaces web. Así un valor guardado por
+  // error no puede convertir el banner en un enlace ejecutable.
+  const customLink = banner.linkUrl?.trim();
+  const destination =
+    customLink && (customLink.startsWith("/") || /^https?:\/\//i.test(customLink))
+      ? customLink
+      : product
+        ? `/productos/${product.slug}`
+        : null;
+
   const image = (
     // Se usa img porque la URL es administrable y puede venir de Storage o de
     // un proveedor externo; así no hace falta aprobar dominios en next.config.
@@ -30,14 +40,16 @@ function Banner({
       ? "group relative block aspect-[16/5] overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm"
       : "group relative hidden overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm xl:block xl:h-full xl:min-h-[1200px]";
 
-  if (!product) {
+  if (!destination) {
     return <div className={baseClass}>{image}</div>;
   }
 
   return (
-    <Link href={`/productos/${product.slug}`} className={baseClass}>
+    <Link href={destination} className={baseClass}>
       {image}
-      <span className="sr-only">Ver {product.name}</span>
+      <span className="sr-only">
+        {product && !customLink ? `Ver ${product.name}` : "Ver destino del banner"}
+      </span>
     </Link>
   );
 }
