@@ -14,6 +14,8 @@ export async function GET(req: Request) {
       .select(
         "id, name, sku, price_crc, sale_price_crc, product_images ( url, position )"
       )
+      // Un banner solo puede dirigir a un producto publicado públicamente.
+      .eq("is_visible", true)
       .limit(20);
 
     if (ids) {

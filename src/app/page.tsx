@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { HeroBanner } from "@/components/HeroBanner";
+import { PromotionalBanners } from "@/components/PromotionalBanners";
 import { FeatureStrip } from "@/components/FeatureStrip";
 import { BrandMarquee } from "@/components/BrandMarquee";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
@@ -87,6 +88,15 @@ export default async function HomePage() {
     getTopCategoriesWithImage(14),
   ]);
 
+  const bannerProductIds = [
+    content.banners.left.productId,
+    content.banners.center.productId,
+    content.banners.right.productId,
+  ].filter((id): id is string => !!id);
+  const bannerProducts = bannerProductIds.length
+    ? await getProductsByIds([...new Set(bannerProductIds)])
+    : [];
+
   // Hero: hasta 5 productos para el carrusel.
   let heroFeatured: Product[] = content.hero.featuredProductIds.length
     ? await getProductsByIds(content.hero.featuredProductIds)
@@ -132,6 +142,7 @@ export default async function HomePage() {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
+      <PromotionalBanners banners={content.banners} products={bannerProducts} />
       <HeroBanner featured={heroFeatured} hero={content.hero} />
 
       <FeatureStrip />

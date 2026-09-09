@@ -20,6 +20,8 @@ import type {
   CategoriesContent,
   CategoryItem,
   ProductSectionContent,
+  PromotionalBannersContent,
+  PromotionalBanner,
   CtaContent,
   FooterContent,
 } from "@/lib/site-content";
@@ -69,6 +71,7 @@ export function StoreEditor({
         cache={productCache}
         autoProduct={autoHeroProduct}
       />
+      <BannersEditor data={content.banners} cache={productCache} />
       <CategoriesEditor
         data={content.categories}
         categories={categories}
@@ -93,6 +96,130 @@ export function StoreEditor({
       <CtaEditor data={content.cta} />
       <FooterEditor data={content.footer} />
     </div>
+  );
+}
+
+/* ---------- promotional banners ---------- */
+
+const BANNER_SLOTS: {
+  key: keyof PromotionalBannersContent;
+  title: string;
+  description: string;
+  dimensions: string;
+}[] = [
+  {
+    key: "left",
+    title: "Banner lateral izquierdo",
+    description: "Se muestra en pantallas grandes, a la izquierda del banner central.",
+    dimensions: "Proporción recomendada: 160 × 600 px",
+  },
+  {
+    key: "center",
+    title: "Banner central",
+    description: "Banner principal horizontal, arriba de la página de inicio.",
+    dimensions: "Proporción recomendada: 1600 × 500 px",
+  },
+  {
+    key: "right",
+    title: "Banner lateral derecho",
+    description: "Se muestra en pantallas grandes, a la derecha del banner central.",
+    dimensions: "Proporción recomendada: 160 × 600 px",
+  },
+];
+
+function BannersEditor({
+  data,
+  cache,
+}: {
+  data: PromotionalBannersContent;
+  cache: React.RefObject<Map<string, ProductLite>>;
+}) {
+  const [form, setForm] = useState<PromotionalBannersContent>(data);
+  const [, forceRender] = useState(0);
+  const { save, saving, status, error } = useSave("banners");
+
+  function update(
+    key: keyof PromotionalBannersContent,
+    patch: Partial<PromotionalBanner>
+  ) {
+    setForm((current) => ({
+      ...current,
+      [key]: { ...current[key], ...patch },
+    }));
+  }
+
+  function pickProduct(key: keyof PromotionalBannersContent, product: ProductLite) {
+    cache.current.set(product.id, product);
+    update(key, { productId: product.id });
+    forceRender((value) => value + 1);
+  }
+
+  return (
+    <Card
+      title="2 · Banners promocionales"
+      description="Subí una imagen y vinculala a un producto. Al tocar el banner, la persona irá directamente a la ficha de ese producto."
+      onSave={() => save(form)}
+      saving={saving}
+      status={status}
+      error={error}
+    >
+      <p className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-xs text-brand-800">
+        Los laterales aparecen desde computadoras; en celular se muestra el banner central para mantener la página clara y rápida.
+      </p>
+      <div className="grid gap-5 xl:grid-cols-3">
+        {BANNER_SLOTS.map((slot) => {
+          const banner = form[slot.key];
+          const product = banner.productId
+            ? cache.current.get(banner.productId) ?? null
+            : null;
+          return (
+            <div
+              key={slot.key}
+              className="rounded-xl border border-ink-200 bg-ink-50/40 p-3"
+            >
+              <h3 className="text-sm font-black text-ink-900">{slot.title}</h3>
+              <p className="mt-1 min-h-9 text-xs text-ink-500">
+                {slot.description}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold text-brand-700">
+                {slot.dimensions}
+              </p>
+              <div className="mt-3">
+                <Label>Imagen</Label>
+                <ImageUpload
+                  url={banner.imageUrl}
+                  onChange={(imageUrl) => update(slot.key, { imageUrl })}
+                />
+              </div>
+              <div className="mt-3">
+                <Text
+                  label="Texto alternativo"
+                  value={banner.altText}
+                  placeholder="Ej.: Promoción cámara Tapo"
+                  onChange={(altText) => update(slot.key, { altText })}
+                />
+              </div>
+              <div className="mt-3">
+                <Label>Producto al que dirige</Label>
+                {product ? (
+                  <ProductChip
+                    p={product}
+                    onRemove={() => update(slot.key, { productId: null })}
+                  />
+                ) : (
+                  <p className="mb-2 text-xs text-ink-500">
+                    Sin producto vinculado: la imagen se verá, pero no llevará a una ficha.
+                  </p>
+                )}
+                <div className="mt-2">
+                  <ProductSearch onPick={(product) => pickProduct(slot.key, product)} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
 
@@ -647,7 +774,7 @@ function CategoriesEditor({
 
   return (
     <Card
-      title="2 · Categorías de la tienda"
+      title="3 · Categorías de la tienda"
       description="Carrusel de categorías. Sin elementos se muestran automáticamente las más populares."
       onSave={() => save(form)}
       saving={saving}
@@ -790,7 +917,7 @@ function ProductSectionEditor({
     set("productIds", next);
   }
 
-  const num = sectionKey === "ofertas" ? "3" : "4";
+  const num = sectionKey === "ofertas" ? "4" : "5";
 
   return (
     <Card
@@ -880,7 +1007,7 @@ function CtaEditor({ data }: { data: CtaContent }) {
 
   return (
     <Card
-      title="5 · Llamado a la acción"
+      title="6 · Llamado a la acción"
       description='Sección "Hablemos de tu proyecto" antes del footer.'
       onSave={() => save(form)}
       saving={saving}
@@ -941,7 +1068,7 @@ function FooterEditor({ data }: { data: FooterContent }) {
 
   return (
     <Card
-      title="6 · Footer"
+      title="7 · Footer"
       description="Pie de página: datos de contacto, redes y columnas de enlaces."
       onSave={() => save(form)}
       saving={saving}

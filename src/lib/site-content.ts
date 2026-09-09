@@ -34,6 +34,18 @@ export type ProductSectionContent = {
   productIds: string[];
 };
 
+export type PromotionalBanner = {
+  imageUrl: string;
+  altText: string;
+  productId: string | null;
+};
+
+export type PromotionalBannersContent = {
+  left: PromotionalBanner;
+  center: PromotionalBanner;
+  right: PromotionalBanner;
+};
+
 export type CtaContent = {
   eyebrow: string;
   title: string;
@@ -114,6 +126,7 @@ export type SiteContent = {
   categories: CategoriesContent;
   ofertas: ProductSectionContent;
   destacados: ProductSectionContent;
+  banners: PromotionalBannersContent;
   cta: CtaContent;
   footer: FooterContent;
   navbar: NavbarContent;
@@ -151,6 +164,11 @@ export const DEFAULT_CONTENT: SiteContent = {
     title: "Productos destacados",
     subtitle: "Una selección del equipo de TUStore Costa Rica",
     productIds: [],
+  },
+  banners: {
+    left: { imageUrl: "", altText: "Banner publicitario izquierdo", productId: null },
+    center: { imageUrl: "", altText: "Banner promocional", productId: null },
+    right: { imageUrl: "", altText: "Banner publicitario derecho", productId: null },
   },
   cta: {
     eyebrow: "¿Necesitás asesoría?",
@@ -211,6 +229,7 @@ export const SECTION_KEYS = [
   "categories",
   "ofertas",
   "destacados",
+  "banners",
   "cta",
   "footer",
   "navbar",
@@ -260,6 +279,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       categories: mergeSection("categories", section("categories")),
       ofertas: mergeSection("ofertas", section("ofertas")),
       destacados: mergeSection("destacados", section("destacados")),
+      banners: mergeSection("banners", section("banners")),
       cta: mergeSection("cta", section("cta")),
       footer: mergeSection("footer", section("footer")),
       navbar: {

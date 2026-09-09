@@ -69,6 +69,9 @@ export default async function AjustesPage() {
     ...(site.hero.featuredProductId ? [site.hero.featuredProductId] : []),
     ...site.ofertas.productIds,
     ...site.destacados.productIds,
+    ...(site.banners.left.productId ? [site.banners.left.productId] : []),
+    ...(site.banners.center.productId ? [site.banners.center.productId] : []),
+    ...(site.banners.right.productId ? [site.banners.right.productId] : []),
   ];
   const refProducts = await getProductsByIds([...new Set(ids)]);
   const autoHeroProduct = autoFeatured[0] ? toLite(autoFeatured[0]) : null;
