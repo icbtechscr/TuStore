@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
-import { HeroBanner } from "@/components/HeroBanner";
 import { PromotionalBanners } from "@/components/PromotionalBanners";
 import { FeatureStrip } from "@/components/FeatureStrip";
 import { BrandMarquee } from "@/components/BrandMarquee";
@@ -13,7 +12,6 @@ import {
   getTopCategoriesWithImage,
   getProductsByIds,
   getCategoryCountsMap,
-  type Product,
 } from "@/lib/products";
 import { getSiteContent } from "@/lib/site-content";
 import { BRANCHES } from "@/lib/branches";
@@ -97,14 +95,6 @@ export default async function HomePage() {
     ? await getProductsByIds([...new Set(bannerProductIds)])
     : [];
 
-  // Hero: hasta 5 productos para el carrusel.
-  let heroFeatured: Product[] = content.hero.featuredProductIds.length
-    ? await getProductsByIds(content.hero.featuredProductIds)
-    : [];
-  if (!heroFeatured.length) heroFeatured = autoFeatured.slice(0, 5);
-  heroFeatured = heroFeatured.slice(0, 5);
-  const heroIds = new Set(heroFeatured.map((p) => p.id));
-
   // Ofertas
   const onSale = content.ofertas.productIds.length
     ? await getProductsByIds(content.ofertas.productIds)
@@ -113,7 +103,7 @@ export default async function HomePage() {
   // Destacados
   const destacados = content.destacados.productIds.length
     ? await getProductsByIds(content.destacados.productIds)
-    : autoFeatured.filter((p) => !heroIds.has(p.id)).slice(0, 10);
+    : autoFeatured.slice(0, 10);
 
   // Categorías
   let cats = autoCats;
@@ -142,54 +132,53 @@ export default async function HomePage() {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <PromotionalBanners banners={content.banners} products={bannerProducts} />
-      <HeroBanner featured={heroFeatured} hero={content.hero} />
+      <PromotionalBanners banners={content.banners} products={bannerProducts}>
+        <FeatureStrip />
 
-      <FeatureStrip />
+        <CategoryCarousel
+          categories={cats}
+          eyebrow={content.categories.eyebrow}
+          title={content.categories.title}
+          subtitle={content.categories.subtitle}
+        />
 
-      <CategoryCarousel
-        categories={cats}
-        eyebrow={content.categories.eyebrow}
-        title={content.categories.title}
-        subtitle={content.categories.subtitle}
-      />
+        {onSale.length > 0 && (
+          <section className="border-t border-[#d5d9d9] bg-[#eaeded] py-8 md:py-10">
+            <div className="mx-auto max-w-[1500px] px-4">
+              <SectionHeader
+                eyebrow={content.ofertas.eyebrow}
+                title={content.ofertas.title}
+                subtitle={content.ofertas.subtitle}
+                href="/ofertas"
+                hrefLabel="Ver todas"
+                accent="danger"
+              />
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {onSale.map((p, i) => (
+                  <ProductCard key={p.id} product={p} index={i} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
-      {onSale.length > 0 && (
-        <section className="border-t border-[#d5d9d9] bg-[#eaeded] py-8 md:py-10">
-          <div className="mx-auto max-w-[1500px] px-4">
+        <section className="border-t border-[#d5d9d9] bg-[#eaeded] px-4 py-8 md:py-10">
+          <div className="mx-auto max-w-[1500px]">
             <SectionHeader
-              eyebrow={content.ofertas.eyebrow}
-              title={content.ofertas.title}
-              subtitle={content.ofertas.subtitle}
-              href="/ofertas"
-              hrefLabel="Ver todas"
-              accent="danger"
+              eyebrow={content.destacados.eyebrow}
+              title={content.destacados.title}
+              subtitle={content.destacados.subtitle}
+              href="/productos"
+              accent="accent"
             />
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {onSale.map((p, i) => (
+              {destacados.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
             </div>
           </div>
         </section>
-      )}
-
-      <section className="border-t border-[#d5d9d9] bg-[#eaeded] px-4 py-8 md:py-10">
-        <div className="mx-auto max-w-[1500px]">
-        <SectionHeader
-          eyebrow={content.destacados.eyebrow}
-          title={content.destacados.title}
-          subtitle={content.destacados.subtitle}
-          href="/productos"
-          accent="accent"
-        />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {destacados.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
-          ))}
-        </div>
-        </div>
-      </section>
+      </PromotionalBanners>
 
       <BrandMarquee />
 

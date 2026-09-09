@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { Product } from "@/lib/products";
 import type { PromotionalBanner, PromotionalBannersContent } from "@/lib/site-content";
 
@@ -27,7 +28,7 @@ function Banner({
   const baseClass =
     placement === "center"
       ? "group relative block aspect-[16/5] overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm"
-      : "group relative hidden overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm xl:block xl:aspect-[4/15]";
+      : "group relative hidden overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm xl:block xl:h-full xl:min-h-[1200px]";
 
   if (!product) {
     return <div className={baseClass}>{image}</div>;
@@ -44,29 +45,34 @@ function Banner({
 export function PromotionalBanners({
   banners,
   products,
+  children,
 }: {
   banners: PromotionalBannersContent;
   products: Product[];
+  children: ReactNode;
 }) {
   const productsById = new Map(products.map((product) => [product.id, product]));
   const hasBanner = [banners.left, banners.center, banners.right].some(
     (banner) => banner.imageUrl
   );
-  if (!hasBanner) return null;
+  if (!hasBanner) return <>{children}</>;
 
   return (
     <section className="border-b border-[#d5d9d9] bg-[#eaeded] py-3">
-      <div className="mx-auto grid max-w-[1840px] grid-cols-1 gap-3 px-3 xl:grid-cols-[160px_minmax(0,1fr)_160px] xl:items-start">
+      <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-3 px-3 xl:grid-cols-[230px_minmax(0,1fr)_230px] xl:items-stretch">
         <Banner
           banner={banners.left}
           product={productsById.get(banners.left.productId ?? "") ?? null}
           placement="left"
         />
-        <Banner
-          banner={banners.center}
-          product={productsById.get(banners.center.productId ?? "") ?? null}
-          placement="center"
-        />
+        <div className="min-w-0 space-y-3">
+          <Banner
+            banner={banners.center}
+            product={productsById.get(banners.center.productId ?? "") ?? null}
+            placement="center"
+          />
+          {children}
+        </div>
         <Banner
           banner={banners.right}
           product={productsById.get(banners.right.productId ?? "") ?? null}

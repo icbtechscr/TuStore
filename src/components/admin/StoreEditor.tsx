@@ -66,11 +66,6 @@ export function StoreEditor({
 
   return (
     <div className="space-y-6">
-      <HeroEditor
-        data={content.hero}
-        cache={productCache}
-        autoProduct={autoHeroProduct}
-      />
       <BannersEditor data={content.banners} cache={productCache} />
       <CategoriesEditor
         data={content.categories}
@@ -156,7 +151,7 @@ function BannersEditor({
 
   return (
     <Card
-      title="2 · Banners promocionales"
+      title="1 · Banners promocionales"
       description="Subí una imagen y vinculala a un producto. Al tocar el banner, la persona irá directamente a la ficha de ese producto."
       onSave={() => save(form)}
       saving={saving}
@@ -774,7 +769,7 @@ function CategoriesEditor({
 
   return (
     <Card
-      title="3 · Categorías de la tienda"
+      title="2 · Categorías de la tienda"
       description="Carrusel de categorías. Sin elementos se muestran automáticamente las más populares."
       onSave={() => save(form)}
       saving={saving}
@@ -917,7 +912,7 @@ function ProductSectionEditor({
     set("productIds", next);
   }
 
-  const num = sectionKey === "ofertas" ? "4" : "5";
+  const num = sectionKey === "ofertas" ? "3" : "4";
 
   return (
     <Card
@@ -1007,7 +1002,7 @@ function CtaEditor({ data }: { data: CtaContent }) {
 
   return (
     <Card
-      title="6 · Llamado a la acción"
+      title="5 · Llamado a la acción"
       description='Sección "Hablemos de tu proyecto" antes del footer.'
       onSave={() => save(form)}
       saving={saving}
@@ -1068,7 +1063,7 @@ function FooterEditor({ data }: { data: FooterContent }) {
 
   return (
     <Card
-      title="7 · Footer"
+      title="6 · Footer"
       description="Pie de página: datos de contacto, redes y columnas de enlaces."
       onSave={() => save(form)}
       saving={saving}
