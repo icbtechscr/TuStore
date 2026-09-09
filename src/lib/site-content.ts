@@ -48,6 +48,12 @@ export type PromotionalBannersContent = {
   right: PromotionalBanner;
 };
 
+export type FooterBannerContent = {
+  imageUrl: string;
+  altText: string;
+  linkUrl: string;
+};
+
 export type CtaContent = {
   eyebrow: string;
   title: string;
@@ -129,6 +135,7 @@ export type SiteContent = {
   ofertas: ProductSectionContent;
   destacados: ProductSectionContent;
   banners: PromotionalBannersContent;
+  footerBanner: FooterBannerContent;
   cta: CtaContent;
   footer: FooterContent;
   navbar: NavbarContent;
@@ -171,6 +178,11 @@ export const DEFAULT_CONTENT: SiteContent = {
     left: { imageUrl: "", altText: "Banner publicitario izquierdo", productId: null, linkUrl: "" },
     center: { imageUrl: "", altText: "Banner promocional", productId: null, linkUrl: "" },
     right: { imageUrl: "", altText: "Banner publicitario derecho", productId: null, linkUrl: "" },
+  },
+  footerBanner: {
+    imageUrl: "/banners/demo-footer-tech-promo.png",
+    altText: "Promoción de tecnología, redes y seguridad",
+    linkUrl: "/productos",
   },
   cta: {
     eyebrow: "¿Necesitás asesoría?",
@@ -232,6 +244,7 @@ export const SECTION_KEYS = [
   "ofertas",
   "destacados",
   "banners",
+  "footerBanner",
   "cta",
   "footer",
   "navbar",
@@ -289,6 +302,7 @@ export async function getSiteContent(): Promise<SiteContent> {
         center: { ...DEFAULT_CONTENT.banners.center, ...banners.center },
         right: { ...DEFAULT_CONTENT.banners.right, ...banners.right },
       },
+      footerBanner: mergeSection("footerBanner", section("footerBanner")),
       cta: mergeSection("cta", section("cta")),
       footer: mergeSection("footer", section("footer")),
       navbar: {

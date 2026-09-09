@@ -34,6 +34,11 @@ export const metadata: Metadata = {
 // Cache de 10 min: cada visita ya no golpea la base (baja el egress).
 export const revalidate = 600;
 
+function validBannerLink(link: string) {
+  const href = link.trim();
+  return href.startsWith("/") || /^https?:\/\//i.test(href) ? href : null;
+}
+
 export default async function HomePage() {
   const content = await getSiteContent();
 
@@ -209,6 +214,34 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {content.footerBanner.imageUrl && (
+        <section className="bg-white px-4 py-6 md:py-8">
+          <div className="mx-auto max-w-[1600px] overflow-hidden rounded-xl border border-ink-200 bg-brand-950 shadow-sm">
+            {validBannerLink(content.footerBanner.linkUrl) ? (
+              <Link
+                href={validBannerLink(content.footerBanner.linkUrl)!}
+                className="group block aspect-[25/9] overflow-hidden"
+              >
+                {/* URL configurable desde el administrador. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={content.footerBanner.imageUrl}
+                  alt={content.footerBanner.altText || "Banner promocional"}
+                  className="size-full object-cover transition duration-300 group-hover:scale-[1.01]"
+                />
+              </Link>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={content.footerBanner.imageUrl}
+                alt={content.footerBanner.altText || "Banner promocional"}
+                className="aspect-[25/9] size-full object-cover"
+              />
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

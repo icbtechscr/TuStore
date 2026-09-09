@@ -22,6 +22,7 @@ import type {
   ProductSectionContent,
   PromotionalBannersContent,
   PromotionalBanner,
+  FooterBannerContent,
   CtaContent,
   FooterContent,
 } from "@/lib/site-content";
@@ -89,6 +90,7 @@ export function StoreEditor({
         emptyHint="Estos son los productos destacados que se muestran ahora. Editá la lista o dejá vacío para modo automático."
       />
       <CtaEditor data={content.cta} />
+      <FooterBannerEditor data={content.footerBanner} />
       <FooterEditor data={content.footer} />
     </div>
   );
@@ -1065,6 +1067,58 @@ function CtaEditor({ data }: { data: CtaContent }) {
   );
 }
 
+/* ---------- banner antes del footer ---------- */
+
+function FooterBannerEditor({ data }: { data: FooterBannerContent }) {
+  const [form, setForm] = useState<FooterBannerContent>(data);
+  const { save, saving, status, error } = useSave("footerBanner");
+  const set = <K extends keyof FooterBannerContent>(
+    key: K,
+    value: FooterBannerContent[K]
+  ) => setForm((current) => ({ ...current, [key]: value }));
+
+  return (
+    <Card
+      title="6 · Banner antes del footer"
+      description="Franja publicitaria ubicada entre la sección azul de asesoría y el footer. Podés reemplazarla o dejar la imagen vacía para ocultarla."
+      onSave={() => save(form)}
+      saving={saving}
+      status={status}
+      error={error}
+    >
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div>
+          <Label>Imagen horizontal</Label>
+          <ImageUpload
+            url={form.imageUrl}
+            onChange={(imageUrl) => set("imageUrl", imageUrl)}
+          />
+          <p className="mt-1 text-[11px] text-ink-500">
+            Tamaño recomendado: 1600 × 576 px.
+          </p>
+        </div>
+        <div className="space-y-4">
+          <Text
+            label="Texto alternativo"
+            value={form.altText}
+            placeholder="Ej.: Promoción de tecnología"
+            onChange={(altText) => set("altText", altText)}
+          />
+          <Text
+            label="Enlace al que dirige (opcional)"
+            value={form.linkUrl}
+            placeholder="Ej.: /productos o /categoria/seguridad"
+            onChange={(linkUrl) => set("linkUrl", linkUrl)}
+          />
+          <p className="text-xs text-ink-500">
+            Acepta rutas internas y enlaces completos. Si lo dejás vacío, la imagen solo se muestra.
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 /* ---------- footer ---------- */
 
 function FooterEditor({ data }: { data: FooterContent }) {
@@ -1082,7 +1136,7 @@ function FooterEditor({ data }: { data: FooterContent }) {
 
   return (
     <Card
-      title="6 · Footer"
+      title="7 · Footer"
       description="Pie de página: datos de contacto, redes y columnas de enlaces."
       onSave={() => save(form)}
       saving={saving}
