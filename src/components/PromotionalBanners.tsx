@@ -31,14 +31,18 @@ function Banner({
     <img
       src={banner.imageUrl}
       alt={banner.altText || product?.name || "Banner promocional de TUStore"}
-      className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+      className={
+        placement === "center"
+          ? "size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+          : "block h-auto w-full object-contain object-top transition duration-300 group-hover:scale-[1.02]"
+      }
     />
   );
 
   const baseClass =
     placement === "center"
       ? "group relative block aspect-[16/5] overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm"
-      : "group relative hidden overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm xl:block xl:h-full xl:min-h-[1200px]";
+      : "group relative hidden overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm xl:block xl:self-start";
 
   if (!destination) {
     return <div className={baseClass}>{image}</div>;

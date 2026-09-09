@@ -106,7 +106,7 @@ const BANNER_SLOTS: {
     key: "left",
     title: "Banner lateral izquierdo",
     description: "Se muestra en pantallas grandes, a la izquierda del banner central.",
-    dimensions: "Tamaño recomendado: 600 × 3000 px",
+    dimensions: "Tamaño real: 230 × 850 px. Para mayor nitidez: 460 × 1700 px.",
   },
   {
     key: "center",
@@ -118,7 +118,7 @@ const BANNER_SLOTS: {
     key: "right",
     title: "Banner lateral derecho",
     description: "Se muestra en pantallas grandes, a la derecha del banner central.",
-    dimensions: "Tamaño recomendado: 600 × 3000 px",
+    dimensions: "Tamaño real: 230 × 850 px. Para mayor nitidez: 460 × 1700 px.",
   },
 ];
 
@@ -159,7 +159,8 @@ function BannersEditor({
       error={error}
     >
       <p className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-xs text-brand-800">
-        Los laterales aparecen desde computadoras; en celular se muestra el banner central para mantener la página clara y rápida.
+        Los laterales aparecen desde computadoras y siempre se ajustan completos,
+        sin recortar el contenido. En celular se muestra únicamente el banner central.
       </p>
       <div className="grid gap-5 xl:grid-cols-3">
         {BANNER_SLOTS.map((slot) => {
