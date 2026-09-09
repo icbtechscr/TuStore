@@ -216,12 +216,12 @@ export default async function HomePage() {
       </section>
 
       {content.footerBanner.imageUrl && (
-        <section className="bg-white px-4 py-6 md:py-8">
+        <section className="bg-white px-4 py-3 md:py-4">
           <div className="mx-auto max-w-[1600px] overflow-hidden rounded-xl border border-ink-200 bg-brand-950 shadow-sm">
             {validBannerLink(content.footerBanner.linkUrl) ? (
               <Link
                 href={validBannerLink(content.footerBanner.linkUrl)!}
-                className="group block aspect-[25/9] overflow-hidden"
+                className="group block aspect-[16/3] overflow-hidden"
               >
                 {/* URL configurable desde el administrador. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -236,7 +236,7 @@ export default async function HomePage() {
               <img
                 src={content.footerBanner.imageUrl}
                 alt={content.footerBanner.altText || "Banner promocional"}
-                className="aspect-[25/9] size-full object-cover"
+                className="aspect-[16/3] size-full object-cover"
               />
             )}
           </div>

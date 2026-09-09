@@ -1094,7 +1094,7 @@ function FooterBannerEditor({ data }: { data: FooterBannerContent }) {
             onChange={(imageUrl) => set("imageUrl", imageUrl)}
           />
           <p className="mt-1 text-[11px] text-ink-500">
-            Tamaño recomendado: 1600 × 576 px.
+            Tamaño recomendado: 1600 × 300 px (franja panorámica delgada).
           </p>
         </div>
         <div className="space-y-4">
