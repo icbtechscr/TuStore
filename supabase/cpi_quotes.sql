@@ -1,4 +1,4 @@
--- Cotizaciones de CPI sincronizadas hacia el panel ICB.
+-- Cotizaciones de CPI sincronizadas hacia el panel de TuStore.
 -- Fuente: Facturacion -> CAPTURA -> Cotizaciones. Para cada COT se abre el
 -- detalle y se guardan sus lineas para reportar productos mas cotizados.
 

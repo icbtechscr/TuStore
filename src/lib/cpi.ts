@@ -17,7 +17,7 @@ const BASE = (process.env.CPI_BASE_URL || "https://www.appcontadorcpi.com/gm/").
 );
 const USER = process.env.CPI_USER || "";
 const PASS = process.env.CPI_PASS || "";
-const ID = process.env.CPI_ID || "20";
+const ID = process.env.CPI_ID || "";
 
 // Headers de navegador: sin esto el servidor responde 403 a peticiones "bot".
 const BROWSER_HEADERS: Record<string, string> = {
@@ -496,8 +496,8 @@ export async function cpiFetchSoldProductsHtml(
     str21: "",
     str23: "",
     str24: "",
-    str25: process.env.CPI_ACTIVITY_CODES || "4741.0|4759.0",
-    str27: process.env.CPI_TAX_TYPES || "0|1",
+    str25: process.env.CPI_ACTIVITY_CODES || "",
+    str27: process.env.CPI_TAX_TYPES || "",
     otros: "",
     familia: "",
     SocaaID: ID,

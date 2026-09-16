@@ -27,12 +27,43 @@ En Coolify define estas variables en la aplicación de TuStore:
 - `NEXT_PUBLIC_SITE_ORIGIN` (mismo origen sin rutas)
 - `TUSTORE_EXTERNAL_EFFECTS_ENABLED=false`
 
+Para habilitar la analítica CPI propia de TuStore también se requieren:
+
+- `CPI_BASE_URL`
+- `CPI_USER`
+- `CPI_PASS`
+- `CPI_ID`
+- `TUSTORE_SYNC_TARGET_ORIGIN=https://api.tustorecr.com`
+- `TUSTORE_CPI_ENABLED=true`
+
+Los filtros `CPI_ACTIVITY_CODES`, `CPI_TAX_TYPES` y
+`CPI_INVENTORY_BRANCHES` son opcionales y deben corresponder a la cuenta CPI de
+TuStore, no a ICB.
+
 Las variables `NEXT_PUBLIC_*` deben estar disponibles durante el build porque
 Next.js las incorpora al bundle. Las claves privadas deben permanecer solo en
-runtime. CPI, empleados, vendedores y sincronizaciones quedan sin configurar
-hasta que se habiliten como módulos propios de TuStore.
+runtime. El worker CPI usa `/etc/tustore/runtime.env`, separado de las variables
+y servicios de ICB.
 
-## 3. Verificación antes del dominio
+## 3. Activar el worker CPI
+
+Después de validar las credenciales con una ejecución manual:
+
+```bash
+docker build --target cpi-worker -t tustore-cpi:local .
+sudo install -m 0755 scripts/self-host/tustore-host-job.sh /opt/tustore-ops/tustore-host-job.sh
+sudo install -m 0644 scripts/self-host/tustore-cpi.service scripts/self-host/tustore-cpi.timer \
+  scripts/self-host/tustore-cpi-full.service scripts/self-host/tustore-cpi-full.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl start tustore-cpi.service
+sudo systemctl enable --now tustore-cpi.timer tustore-cpi-full.timer
+```
+
+La sincronización incremental cubre tres días cada 30 minutos; la nocturna
+reconcilia 31 días. Ambas escriben exclusivamente en el Supabase autorizado por
+`TUSTORE_SYNC_TARGET_ORIGIN`.
+
+## 4. Verificación antes del dominio
 
 Desde el servidor o desde la red local:
 
@@ -45,7 +76,7 @@ La respuesta del healthcheck debe ser `200`. Después se revisan portada,
 búsqueda, catálogo, detalle, carrito y checkout con efectos externos todavía
 deshabilitados.
 
-## 4. Cambio de dominio
+## 5. Cambio de dominio
 
 Cuando QA termine, configura el dominio en Coolify, actualiza
 `NEXT_PUBLIC_SITE_URL` y `NEXT_PUBLIC_SITE_ORIGIN`, espera el certificado TLS y

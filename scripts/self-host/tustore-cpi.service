@@ -1,0 +1,11 @@
+[Unit]
+Description=TuStore CPI sync to its isolated database
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/opt/tustore-ops/tustore-host-job.sh cpi
+TimeoutStartSec=100min
+Nice=10

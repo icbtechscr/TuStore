@@ -27,7 +27,7 @@ const REQUEST_TIMEOUT_MS = 45_000;
 const BASE = (process.env.CPI_BASE_URL || "https://www.appcontadorcpi.com/gm/").replace(/\/*$/, "/");
 const USER = process.env.CPI_USER || "";
 const PASS = process.env.CPI_PASS || "";
-const ID = process.env.CPI_ID || "20";
+const ID = process.env.CPI_ID || "";
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SB_KEY = process.env.SUPABASE_SECRET_KEY || "";
 
@@ -159,7 +159,9 @@ async function fetchReporte(cookie, range) {
     add("str22[]", col);
   }
   add("str23", " group by Facturas.cnum_factureal, Facturas.ind_tipfac,Detalles.cnum_factura");
-  add("str25", "4741.0|4759.0"); add("str27", "0|1"); add("familia", "");
+  add("str25", process.env.CPI_ACTIVITY_CODES || "");
+  add("str27", process.env.CPI_TAX_TYPES || "");
+  add("familia", "");
   add("SocaaID", ID); add("idiomasistema", "");
   const body = p.toString();
 
@@ -274,6 +276,19 @@ async function saveRows(rows, range) {
   if (rows.length === 0) { console.log("Sin filas para guardar."); return; }
   if (!SB_URL || !SB_KEY) throw new Error("Faltan NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SECRET_KEY en .env.local");
   const sb = createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+
+  // Cada empresa de CPI tiene su propio padrón de vendedores. Los registramos
+  // desde el reporte para no depender de semillas de otra empresa.
+  const vendors = [...new Set(rows.map((row) => row.vendedor).filter(Boolean))];
+  if (vendors.length) {
+    const { error: vendorError } = await sb
+      .from("cpi_vendor_map")
+      .upsert(vendors.map((cpi_vendor) => ({ cpi_vendor })), {
+        onConflict: "cpi_vendor",
+        ignoreDuplicates: true,
+      });
+    if (vendorError) throw new Error("Supabase (vendedores CPI): " + vendorError.message);
+  }
 
   const { data: mapRows } = await sb.from("cpi_vendor_map").select("cpi_vendor, user_id");
   const map = new Map(); const pending = [];

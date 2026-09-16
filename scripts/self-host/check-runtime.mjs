@@ -7,15 +7,36 @@ const required = [
   "NEXT_PUBLIC_SITE_URL",
   "NEXT_PUBLIC_SITE_ORIGIN",
 ];
+const cpiEnabled = process.env.TUSTORE_CPI_ENABLED === "true";
+const cpiRequired = [
+  "CPI_USER",
+  "CPI_PASS",
+  "CPI_ID",
+  "TUSTORE_SYNC_TARGET_ORIGIN",
+];
 
 const missing = required.filter((key) => !process.env[key]);
+const cpiMissing = cpiEnabled
+  ? cpiRequired.filter((key) => !process.env[key])
+  : [];
 const counts = {};
 const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;
 
 if (base && secret) {
   const headers = { apikey: secret, authorization: `Bearer ${secret}` };
-  for (const table of ["products", "product_images", "orders"]) {
+  const tables = ["products", "product_images", "orders"];
+  if (cpiEnabled) {
+    tables.push(
+      "cpi_sales",
+      "cpi_quotes",
+      "cpi_inventory",
+      "cpi_product_sales_daily",
+      "cpi_product_sales_branch_daily",
+      "cpi_vendor_map"
+    );
+  }
+  for (const table of tables) {
     try {
       const response = await fetch(`${base}/rest/v1/${table}?select=*&limit=1`, {
         headers: { ...headers, Prefer: "count=exact" },
@@ -40,10 +61,11 @@ try {
 
 console.log(JSON.stringify({
   missing,
+  cpi: { enabled: cpiEnabled, missing: cpiMissing },
   counts,
   web,
   externalEffects: process.env.TUSTORE_EXTERNAL_EFFECTS_ENABLED === "true",
 }, null, 2));
 
-if (web < 200 || web >= 400 || missing.length) process.exitCode = 1;
+if (web < 200 || web >= 400 || missing.length || cpiMissing.length) process.exitCode = 1;
 if (Object.values(counts).some((value) => value.status >= 400)) process.exitCode = 1;

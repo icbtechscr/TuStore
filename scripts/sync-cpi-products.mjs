@@ -1,5 +1,5 @@
 // Sincroniza el reporte CPI "Unidades vendidas" hacia Supabase.
-// Se ejecuta localmente porque CPI solo acepta la IP autorizada de ICB.
+// Se ejecuta desde el worker propio porque CPI restringe las IP autorizadas.
 //
 //   node scripts/sync-cpi-products.mjs
 //   node scripts/sync-cpi-products.mjs --from=2026-07-01 --to=2026-07-20
@@ -31,7 +31,7 @@ const BRANCH_TABLE = "cpi_product_sales_branch_daily";
 const BASE = (process.env.CPI_BASE_URL || "https://www.appcontadorcpi.com/gm/").replace(/\/*$/, "/");
 const USER = process.env.CPI_USER || "";
 const PASS = process.env.CPI_PASS || "";
-const ID = process.env.CPI_ID || "20";
+const ID = process.env.CPI_ID || "";
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SB_KEY = process.env.SUPABASE_SECRET_KEY || "";
 const USER_AGENT =
@@ -174,8 +174,8 @@ async function fetchSoldProducts(cookie, day) {
     str21: "",
     str23: "",
     str24: "",
-    str25: process.env.CPI_ACTIVITY_CODES || "4741.0|4759.0",
-    str27: process.env.CPI_TAX_TYPES || "0|1",
+    str25: process.env.CPI_ACTIVITY_CODES || "",
+    str27: process.env.CPI_TAX_TYPES || "",
     otros: "",
     familia: "",
     SocaaID: ID,

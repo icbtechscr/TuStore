@@ -1,0 +1,11 @@
+[Unit]
+Description=TuStore CPI every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+RandomizedDelaySec=30
+Persistent=true
+Unit=tustore-cpi.service
+
+[Install]
+WantedBy=timers.target

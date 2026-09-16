@@ -1,0 +1,10 @@
+[Unit]
+Description=TuStore nightly CPI reconciliation at 01:40 Costa Rica
+
+[Timer]
+OnCalendar=*-*-* 01:40:00 America/Costa_Rica
+Persistent=true
+Unit=tustore-cpi-full.service
+
+[Install]
+WantedBy=timers.target

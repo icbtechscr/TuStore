@@ -26,7 +26,7 @@ const REQUEST_TIMEOUT_MS = 60_000;
 const BASE = (process.env.CPI_BASE_URL || "https://www.appcontadorcpi.com/gm/").replace(/\/*$/, "/");
 const USER = process.env.CPI_USER || "";
 const PASS = process.env.CPI_PASS || "";
-const ID = process.env.CPI_ID || "20";
+const ID = process.env.CPI_ID || "";
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SB_KEY = process.env.SUPABASE_SECRET_KEY || "";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
@@ -161,31 +161,21 @@ async function discoverFromPages(cookie) {
   return [];
 }
 
-/** Sucursales de CPI (codigos tomados del filtro "sucursalinventario"). */
-const CPI_SUCURSALES = [
-  { code: "001", label: "San Jose" },
-  { code: "002", label: "Alajuela" },
-  { code: "003", label: "Cartago" },
-  { code: "004", label: "Heredia" },
-  { code: "005", label: "BODEGA RMA" },
-  { code: "006", label: "Puntarenas" },
-  { code: "007", label: "Limon" },
-  { code: "008", label: "San Carlos" },
-  { code: "009", label: "Apartados" },
-  { code: "020", label: "BARREAL" },
-];
-
-function sucursalesFromArgs() {
-  const arg = process.argv.find((a) => a.startsWith("--sucursales="));
-  if (!arg) return null;
-  return arg
-    .slice("--sucursales=".length)
+function parseSucursales(value) {
+  if (!value?.trim()) return null;
+  const parsed = value
     .split(",")
     .map((pair) => {
       const [code, ...rest] = pair.split("=");
       return { code: code.trim(), label: (rest.join("=") || code).trim() };
     })
     .filter((s) => s.code);
+  return parsed.length ? parsed : null;
+}
+
+function sucursalesFromArgs() {
+  const arg = process.argv.find((a) => a.startsWith("--sucursales="));
+  return parseSucursales(arg?.slice("--sucursales=".length));
 }
 
 async function fetchInventory(cookie, sucursalCode) {
@@ -293,7 +283,11 @@ async function main() {
     return;
   }
 
-  let sucursales = sucursalesFromArgs() ?? CPI_SUCURSALES;
+  let sucursales =
+    sucursalesFromArgs() ??
+    parseSucursales(process.env.CPI_INVENTORY_BRANCHES) ??
+    discoverSucursales(html);
+  if (!sucursales?.length) sucursales = await discoverFromPages(cookie);
   if (sucursales.length === 0) {
     console.log("No se detectaron sucursales; se sincroniza el inventario general.");
     sucursales = [{ code: "", label: "Todas las sucursales" }];

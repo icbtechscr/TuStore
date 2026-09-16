@@ -18,10 +18,9 @@ este proyecto.
 ## Aislamiento de datos
 
 Usar un proyecto/instancia de Supabase de TuStore, o como mínimo una base,
-Storage, Auth, roles y credenciales completamente aislados de ICB. Migrar solo
-las tablas de catálogo, pedidos y configuración de TuStore. Las tablas CPI,
-empleados, vendedores, MercadoLibre y push son módulos futuros de TuStore y no
-deben compartir datos con ICB.
+Storage, Auth, roles y credenciales completamente aislados de ICB. La analítica
+CPI de TuStore usa sus propias tablas, vendedores, sucursales y credenciales;
+nunca debe apuntar a la base ni a la cuenta CPI de ICB.
 
 Los respaldos deben guardarse fuera del repositorio, con permisos privados,
 SHA-256 y una copia externa verificable. Nunca subir respaldos, dumps o
@@ -47,6 +46,26 @@ durante una transición controlada. Vacía, la aplicación usa el snapshot local
 5. Configurar una ruta Cloudflare independiente para TuStore.
 6. Cambiar el DNS solo después de comparar datos y conservar el hosting
    anterior para rollback.
+
+## Analítica CPI de TuStore
+
+El panel ya incluye rotación de inventario, ventas por sucursal, desempeño de
+vendedores, cotizaciones e inventario CPI. Para alimentarlo:
+
+1. Ejecutar los archivos `supabase/cpi_*.sql` en la base exclusiva de TuStore.
+2. Crear `/etc/tustore/runtime.env` con permisos `0600` y las variables
+   `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `CPI_BASE_URL`,
+   `CPI_USER`, `CPI_PASS`, `CPI_ID`, `TUSTORE_SYNC_TARGET_ORIGIN` y
+   `TUSTORE_CPI_ENABLED=true`.
+3. Construir el target `cpi-worker` como `tustore-cpi:local`.
+4. Instalar `tustore-host-job.sh` en `/opt/tustore-ops/` y las unidades
+   `tustore-cpi*.service`/`tustore-cpi*.timer` en systemd.
+5. Ejecutar primero `tustore-cpi.service` manualmente y verificar los conteos
+   antes de habilitar los timers.
+
+`CPI_INVENTORY_BRANCHES` es opcional. Si está vacío, el sincronizador descubre
+las sucursales visibles en la cuenta CPI de TuStore; si CPI no publica el
+selector, sincroniza el inventario general sin reutilizar la lista de ICB.
 
 Los archivos con prefijo `icb-` que permanecen en esta carpeta son artefactos
 históricos de la preparación de ICB y no forman parte de este procedimiento.

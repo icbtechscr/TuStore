@@ -1,14 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { rewriteMediaUrl } from "../../src/lib/image-url.ts";
 import { cronAuthorized } from "../../src/lib/cron-auth.ts";
 import { syncRange, checkSyncTarget } from "./run-cpi.mjs";
 
 const old = "https://fnnzlkvohsaxwnmdymvc.supabase.co";
-const local = "http://supabase-icb-pruebas.192.168.0.104.sslip.io";
+const local = "https://api.tustorecr.com";
+process.env.NEXT_PUBLIC_TUSTORE_PREVIOUS_STORAGE_ORIGINS = `${old},${local}`;
+const { rewriteMediaUrl } = await import("../../src/lib/image-url.ts");
 test("public storage moves with the environment without losing path/query", () => {
   assert.equal(rewriteMediaUrl(`${old}/storage/v1/object/public/imagenes/a%20b.png?v=2`, local), `${local}/storage/v1/object/public/imagenes/a%20b.png?v=2`);
-  assert.equal(rewriteMediaUrl(`${local}/storage/v1/object/public/media/avatar.png`, "https://api.icbtechscr.com"), "https://api.icbtechscr.com/storage/v1/object/public/media/avatar.png");
+  assert.equal(rewriteMediaUrl(`${local}/storage/v1/object/public/media/avatar.png`, "https://api.tustorecr.test"), "https://api.tustorecr.test/storage/v1/object/public/media/avatar.png");
   assert.equal(rewriteMediaUrl(`${old}/storage/v1/object/public/imagenes/a.png`, old), `${old}/storage/v1/object/public/imagenes/a.png`);
 });
 test("signed links, third parties, relative paths and invalid URLs stay unchanged", () => {
@@ -19,7 +20,7 @@ test("signed links, third parties, relative paths and invalid URLs stay unchange
   assert.equal(rewriteMediaUrl("  /logo.png  ", local), "/logo.png");
 });
 test("cron fails closed and only accepts the authorization header", () => {
-  const req = (headers = {}) => new Request("https://icb.test/api/cron?secret=test", { headers });
+  const req = (headers = {}) => new Request("https://tustore.test/api/cron?secret=test", { headers });
   assert.equal(cronAuthorized(req(), ""), false);
   assert.equal(cronAuthorized(req(), "test"), false);
   assert.equal(cronAuthorized(req({ authorization: "Bearer wrong" }), "test"), false);
@@ -31,8 +32,8 @@ test("worker uses Costa Rica day boundaries and can cross a month", () => {
   assert.throws(() => syncRange(new Date(), 63));
 });
 test("worker refuses cloud and a mismatched target", () => {
-  const env = { NEXT_PUBLIC_SUPABASE_URL: local, ICB_SYNC_TARGET_ORIGIN: local, CPI_USER: "test", CPI_PASS: "test", CPI_ID: "20", SUPABASE_SECRET_KEY: "test" };
+  const env = { NEXT_PUBLIC_SUPABASE_URL: local, TUSTORE_SYNC_TARGET_ORIGIN: local, CPI_USER: "test", CPI_PASS: "test", CPI_ID: "20", SUPABASE_SECRET_KEY: "test" };
   assert.doesNotThrow(() => checkSyncTarget(env));
-  assert.throws(() => checkSyncTarget({ ...env, NEXT_PUBLIC_SUPABASE_URL: old, ICB_SYNC_TARGET_ORIGIN: old }));
-  assert.throws(() => checkSyncTarget({ ...env, ICB_SYNC_TARGET_ORIGIN: "https://another.test" }));
+  assert.throws(() => checkSyncTarget({ ...env, NEXT_PUBLIC_SUPABASE_URL: old, TUSTORE_SYNC_TARGET_ORIGIN: old }));
+  assert.throws(() => checkSyncTarget({ ...env, TUSTORE_SYNC_TARGET_ORIGIN: "https://another.test" }));
 });
