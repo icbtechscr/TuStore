@@ -310,7 +310,7 @@ export function OrdersManager({ initialOrders }: { initialOrders: Order[] }) {
 
                 {open && (
                   <div className="border-t border-ink-100 bg-ink-50 px-5 py-4">
-                    <div className="grid gap-5 md:grid-cols-[1.3fr_1fr]">
+                    <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
                       {/* Artículos */}
                       <div>
                         <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-500">
@@ -353,7 +353,7 @@ export function OrdersManager({ initialOrders }: { initialOrders: Order[] }) {
                       </div>
 
                       {/* Cliente + envío */}
-                      <div className="space-y-3 text-sm">
+                      <div className="min-w-0 space-y-3 text-sm">
                         <div>
                           <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-ink-500">
                             Cliente
